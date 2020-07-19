@@ -58,3 +58,12 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+# Imported
+Assets/Barebones/*
+!Assets/Barebones/.gitkeep
+
+Assets/Mirror/*
+!Assets/Mirror/.gitkeep
+
+Assets/TextMesh Pro/*
+!Assets/TextMesh Pro/.gitkeep
