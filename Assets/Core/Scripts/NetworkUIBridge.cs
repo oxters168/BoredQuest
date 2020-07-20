@@ -18,7 +18,16 @@ public class NetworkUIBridge : MonoBehaviour
     private Mirror.Websocket.WebsocketTransport websocketTransport;
 
     [Space(10)]
+    public TMPro.TMP_InputField roomNameField;
+    public TMPro.TextMeshProUGUI playersLabel;
+    public TMPro.TextMeshProUGUI roomNameLabel;
     public UnityEngine.UI.Selectable[] enabledOnlyIfConnected;
+
+    [Space(10)]
+    public GameObject msfScreen;
+    public GameObject selfHostScreen;
+    public GameObject loadingScreen;
+    public GameObject inGameScreen;
 
     [Space(10)]
     public ConnectionEvent OnMSFConnectionChanged;
@@ -30,6 +39,14 @@ public class NetworkUIBridge : MonoBehaviour
     private bool prevClientConnected;
     private bool prevMSFSignedIn;
 
+    private bool creatingRoom;
+    private bool connectingToRoom;
+    private bool connectingToGameServer;
+    private bool connectedToGameServer;
+    private GameInfoPacket gameInfo;
+    //private string nameOfRoom;
+    //private int roomId;
+
     void Awake()
     {
         SetInteractables(false);
@@ -39,7 +56,20 @@ public class NetworkUIBridge : MonoBehaviour
     }
     void Update()
     {
+        connectingToGameServer = (NetworkClient.active && !NetworkClient.isConnected);
+        connectedToGameServer = NetworkClient.isConnected;
+
         CheckChanges();
+        UpdateMenus();
+    }
+
+    private void UpdateMenus()
+    {
+        msfScreen.SetActive(!creatingRoom && !connectingToRoom && !connectingToGameServer && !connectedToGameServer);
+        loadingScreen.SetActive(creatingRoom || connectingToRoom || connectingToGameServer);
+        inGameScreen.SetActive(connectedToGameServer);
+        playersLabel.text = "Players: " + gameInfo.OnlinePlayers + "/" + gameInfo.MaxPlayers;
+        roomNameLabel.text = "Room code: " + gameInfo.Name;
     }
 
     private void SetInteractables(bool value)
@@ -86,16 +116,7 @@ public class NetworkUIBridge : MonoBehaviour
         Debug.Log("Room finalized with status " + successfully);
         if (successfully)
         {
-            Debug.Log("Requesting games");
-            MsfTimer.WaitForSeconds(0.2f, () =>
-            {
-                Msf.Client.Matchmaker.FindGames((games) =>
-                {
-                    Debug.Log("Received " + games.Count() + " game(s)");
-                    var recentlyCreatedGame = games.FirstOrDefault((game) => game.Name == roomName);
-                    JoinGame(recentlyCreatedGame.Id);
-                });
-            });
+            TryJoinRoom(roomName);
         }
 
         OnRoomFinalized?.Invoke(roomName, successfully);
@@ -107,7 +128,8 @@ public class NetworkUIBridge : MonoBehaviour
     }
     public void CreateRoom()
     {
-        string roomName = "SomeRandomName";
+        creatingRoom = true;
+        string roomName = System.DateTime.Now.Ticks.ToString();
         //RoomOptions roomOptions = new RoomOptions { IsPublic = false };
         //Msf.Server.Rooms.RegisterRoom(RoomCreationHandler);
         var spawnOptions = new DictionaryOptions();
@@ -126,6 +148,7 @@ public class NetworkUIBridge : MonoBehaviour
         {
             if (controller == null)
             {
+                creatingRoom = false;
                 Debug.LogError("Could not spawn server: " + error);
                 return;
             }
@@ -136,15 +159,46 @@ public class NetworkUIBridge : MonoBehaviour
                 return controller.Status != SpawnStatus.Finalized;
             }, (isSuccess) =>
             {
+                creatingRoom = false;
                 RoomFinalized(roomName, isSuccess);
             }, 60f);
         });
     }
 
+    public void JoinGame()
+    {
+        var roomName = roomNameField.text;
+        TryJoinRoom(roomName);
+    }
     private void JoinGame(int roomId)
     {
         Debug.Log("Requesting access to room " + roomId);
         Msf.Client.Rooms.GetAccess(roomId, RoomAccessHandler);
+    }
+    private void TryJoinRoom(string roomName)
+    {
+        Debug.Log("Requesting games");
+        connectingToRoom = true;
+        MsfTimer.WaitForSeconds(0.2f, () =>
+        {
+            Msf.Client.Matchmaker.FindGames((games) =>
+            {
+                Debug.Log("Received " + games.Count() + " game(s)");
+                var foundGame = games.FirstOrDefault((game) => game.Name == roomName);
+                if (foundGame != null)
+                {
+                    //nameOfRoom = roomName;
+                    //roomId = foundGame.Id;
+                    gameInfo = foundGame;
+                    JoinGame(foundGame.Id);
+                }
+                else
+                {
+                    connectingToRoom = false;
+                    Debug.LogError("Could not find room with name: " + roomName);
+                }
+            });
+        });
     }
 
     private void SignInHandler(AccountInfoPacket accountInfo, string error)
@@ -167,6 +221,7 @@ public class NetworkUIBridge : MonoBehaviour
     }
     private void RoomAccessHandler(RoomAccessPacket accessPacket, string error)
     {
+        connectingToRoom = false;
         if (accessPacket == null || string.IsNullOrEmpty(accessPacket.RoomIp))
         {
             Debug.LogError("Could not access room: " + error);
