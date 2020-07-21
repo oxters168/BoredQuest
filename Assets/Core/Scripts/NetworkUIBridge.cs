@@ -68,8 +68,11 @@ public class NetworkUIBridge : MonoBehaviour
         msfScreen.SetActive(!creatingRoom && !connectingToRoom && !connectingToGameServer && !connectedToGameServer);
         loadingScreen.SetActive(creatingRoom || connectingToRoom || connectingToGameServer);
         inGameScreen.SetActive(connectedToGameServer);
-        playersLabel.text = "Players: " + gameInfo.OnlinePlayers + "/" + gameInfo.MaxPlayers;
-        roomNameLabel.text = "Room code: " + gameInfo.Name;
+        if (gameInfo != null)
+        {
+            playersLabel.text = "Players: " + gameInfo.OnlinePlayers + "/" + gameInfo.MaxPlayers;
+            roomNameLabel.text = "Room code: " + gameInfo.Name;
+        }
     }
 
     private void SetInteractables(bool value)

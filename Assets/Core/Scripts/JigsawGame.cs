@@ -3,17 +3,51 @@ using UnityHelpers;
 
 public class JigsawGame : MonoBehaviour
 {
-    public GameObject[] pieces;
+    public Vector3 puzzleSize = new Vector3(1, 0.1f, 1);
+    public Vector2Int puzzlePieceCount = new Vector2Int(5, 5);
+    public int seed = 1337;
+    public float percentLoaded;
 
+    [Space(10)]
+    public Material puzzleFaceMat;
+    public Material puzzleSideMat;
+    public Material puzzleBackMat;
+
+    [Space(10)]
+    public UnityEngine.Events.UnityEvent OnPuzzleLoaded;
+
+    private Transform jigsawParent;
+    private GameObject[] pieces;
+
+    void Awake()
+    {
+        jigsawParent = new GameObject().transform;
+        jigsawParent.name = "JigsawParent";
+    }
     void Start()
     {
-        //doathing();
+        LoadJigsawPuzzle();
     }
 
-    private void doathing()
+    public void SetPuzzleVisibility(bool onOff)
+    {
+        jigsawParent.gameObject.SetActive(onOff);
+    }
+    public void LoadJigsawPuzzle()
     {
         pieces = new GameObject[25];
-        int seed = 1337;
-        StartCoroutine(JigsawPuzzle.Generate(5, 5, 0.5f, 0.5f, 0.01f, 5, seed, null, pieces));
+        StartCoroutine(JigsawPuzzle.Generate(puzzlePieceCount.x, puzzlePieceCount.y, puzzleSize.x, puzzleSize.z, puzzleSize.y, 5, seed, jigsawParent, pieces, puzzleFaceMat, puzzleSideMat, puzzleBackMat, true, OnPuzzleLoadingPercent, OnPuzzleLoadCompleted));
+    }
+
+    private void OnPuzzleLoadingPercent(float percent)
+    {
+        percentLoaded = percent;
+    }
+    private void OnPuzzleLoadCompleted()
+    {
+        foreach (var piece in pieces)
+            piece.AddComponent<GrabbableTransform>();
+            
+        OnPuzzleLoaded?.Invoke();
     }
 }
