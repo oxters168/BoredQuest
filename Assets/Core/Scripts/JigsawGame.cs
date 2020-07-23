@@ -9,6 +9,8 @@ public class JigsawGame : MonoBehaviour
     public Vector3 puzzleSize = new Vector3(1, 0.1f, 1);
     public Vector2Int puzzlePieceCount = new Vector2Int(5, 5);
     public Vector2 pieceBoundaryPercent = new Vector2(0.1f, 0.1f);
+    public Vector2 boardOuterBorder = Vector2.one;
+    public Vector2 boardInnerBorder = new Vector2(0.66f, 0.66f);
     public int seed = 1337;
     public float percentLoaded;
 
@@ -28,10 +30,10 @@ public class JigsawGame : MonoBehaviour
         jigsawParent = new GameObject().transform;
         jigsawParent.name = "JigsawParent";
     }
-    void Start()
-    {
-        LoadJigsawPuzzle();
-    }
+    //void Start()
+    //{
+    //    LoadJigsawPuzzle();
+    //}
 
     public void SetPuzzleVisibility(bool onOff)
     {
@@ -41,6 +43,20 @@ public class JigsawGame : MonoBehaviour
     {
         pieces = new GameObject[puzzlePieceCount.x * puzzlePieceCount.y];
         StartCoroutine(JigsawPuzzle.Generate(puzzlePieceCount.x, puzzlePieceCount.y, puzzleSize.x, puzzleSize.z, puzzleSize.y, 5, seed, jigsawParent, pieces, puzzleFaceMat, puzzleSideMat, puzzleBackMat, true, OnPuzzleLoadingPercent, OnPuzzleLoadCompleted));
+    }
+    public void DestroyJigsawPuzzle()
+    {
+        percentLoaded = 0;
+
+        if (pieces != null)
+            for (int i = 0; i < pieces.Length; i++)
+                Destroy(pieces[i].gameObject);
+
+        foreach (var keyPair in clusters)
+            Destroy(keyPair.Key.gameObject);
+
+        clusters.Clear();
+        pieces = null;
     }
 
     private void OnAttachAttempt(JigBoundaryCollider sender, JigBoundaryCollider other)
@@ -183,11 +199,9 @@ public class JigsawGame : MonoBehaviour
     {
         foreach (var piece in pieces)
         {
-            piece.AddComponent<GrabbableTransform>();
+            //piece.AddComponent<GrabbableTransform>();
             var pieceBehaviour = piece.AddComponent<JigPieceBehaviour>();
             pieceBehaviour.onAttachAttempt += OnAttachAttempt;
-            //var pieceRigidbody = piece.AddComponent<Rigidbody>();
-            //pieceRigidbody.isKinematic = true;
 
             int columns = puzzlePieceCount.x;
             int rows = puzzlePieceCount.y;
@@ -234,6 +248,37 @@ public class JigsawGame : MonoBehaviour
             currentBoundaryScript.boundarySide = JigBoundaryCollider.BoundarySide.left;
             currentBoundaryScript.boxCenter = new Vector3(-pieceWidth / 2, 0, 0);
             currentBoundaryScript.boxSize = new Vector3(boundaryHeight, pieceDepth, boundaryWidth);
+
+            var pieceCluster = CreateNewCluster();
+            var randX = (Random.value * 2 - 1) * boardOuterBorder.x;
+            var randY = (Random.value * 2 - 1) * boardOuterBorder.y;
+            bool xInside = randX > -boardInnerBorder.x && randX < boardInnerBorder.x;
+            bool yInside = randY > -boardInnerBorder.y && randY < boardInnerBorder.y;
+            if (xInside || yInside)
+            {
+                var rightSideDiff = boardInnerBorder.x - randX;
+                var leftSideDiff = -boardInnerBorder.x - randX;
+                var topSideDiff = boardInnerBorder.y - randY;
+                var bottomSideDiff = -boardInnerBorder.y - randY;
+
+                bool rightLessLeft = Mathf.Abs(rightSideDiff) < Mathf.Abs(leftSideDiff);
+                bool rightLessTop = Mathf.Abs(rightSideDiff) < Mathf.Abs(topSideDiff);
+                bool rightLessBottom = Mathf.Abs(rightSideDiff) < Mathf.Abs(bottomSideDiff);
+                bool leftLessTop = Mathf.Abs(leftSideDiff) < Mathf.Abs(topSideDiff);
+                bool leftLessBottom = Mathf.Abs(leftSideDiff) < Mathf.Abs(bottomSideDiff);
+                bool topLessBottom = Mathf.Abs(topSideDiff) < Mathf.Abs(bottomSideDiff);
+                if ((xInside && rightLessLeft) && (!yInside || (rightLessTop && rightLessBottom)))
+                    randX += rightSideDiff + pieceWidth / 2;
+                else if (xInside && (!yInside || (leftLessTop && leftLessBottom)))
+                    randX += leftSideDiff - pieceWidth / 2;
+                else if (yInside && topLessBottom)
+                    randY += topSideDiff + pieceHeight / 2;
+                else if (yInside)
+                    randY += bottomSideDiff - pieceHeight / 2;
+            }
+            pieceCluster.position = new Vector3(randX, 0, randY);
+            piece.transform.position = pieceCluster.position;
+            AddPieceToCluster(pieceCluster, pieceBehaviour);
         }
             
         OnPuzzleLoaded?.Invoke();

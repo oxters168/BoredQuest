@@ -27,7 +27,7 @@ public class NetworkUIBridge : MonoBehaviour
     public GameObject msfScreen;
     public GameObject selfHostScreen;
     public GameObject loadingScreen;
-    public GameObject inGameScreen;
+    //public GameObject inGameScreen;
 
     [Space(10)]
     public ConnectionEvent OnMSFConnectionChanged;
@@ -44,6 +44,7 @@ public class NetworkUIBridge : MonoBehaviour
     private bool connectingToGameServer;
     private bool connectedToGameServer;
     private GameInfoPacket gameInfo;
+    private JigsawStateMachine stateMachine;
     //private string nameOfRoom;
     //private int roomId;
 
@@ -51,28 +52,78 @@ public class NetworkUIBridge : MonoBehaviour
     {
         SetInteractables(false);
         networkManager = FindObjectOfType<NetworkManager>();
+        stateMachine = FindObjectOfType<JigsawStateMachine>();
         telepathyTransport = networkManager.GetComponent<TelepathyTransport>();
         websocketTransport = networkManager.GetComponent<Mirror.Websocket.WebsocketTransport>();
     }
     void Update()
     {
-        connectingToGameServer = (NetworkClient.active && !NetworkClient.isConnected);
-        connectedToGameServer = NetworkClient.isConnected;
+        SetConnectingToGameServerValue(NetworkClient.active && !NetworkClient.isConnected);
+        SetConnectedToGameServerValue(NetworkClient.isConnected);
 
         CheckChanges();
-        UpdateMenus();
+        //UpdateMenus();
+        UpdateOnScreenInfo();
     }
 
-    private void UpdateMenus()
+    private void UpdateOnScreenInfo()
     {
-        msfScreen.SetActive(!creatingRoom && !connectingToRoom && !connectingToGameServer && !connectedToGameServer);
-        loadingScreen.SetActive(creatingRoom || connectingToRoom || connectingToGameServer);
-        inGameScreen.SetActive(connectedToGameServer);
         if (gameInfo != null)
         {
             playersLabel.text = "Players: " + gameInfo.OnlinePlayers + "/" + gameInfo.MaxPlayers;
             roomNameLabel.text = "Room code: " + gameInfo.Name;
         }
+    }
+    private void UpdateMenus()
+    {
+        msfScreen.SetActive(!creatingRoom && !connectingToRoom && !connectingToGameServer && !connectedToGameServer);
+        loadingScreen.SetActive(creatingRoom || connectingToRoom || connectingToGameServer);
+        //inGameScreen.SetActive(connectedToGameServer);
+    }
+    private void OnConnectedToGameServerValueChanged()
+    {
+        UpdateMenus();
+        stateMachine.SetState(connectedToGameServer ? JigsawStateMachine.GameState.gameSetup : JigsawStateMachine.GameState.none);
+    }
+    private void SetConnectedToGameServerValue(bool onOff)
+    {
+        var prevValue = connectedToGameServer;
+        connectedToGameServer = onOff;
+        if (prevValue != onOff)
+            OnConnectedToGameServerValueChanged();
+    }
+    private void OnConnectingToGameServerValueChanged()
+    {
+        UpdateMenus();
+    }
+    private void SetConnectingToGameServerValue(bool onOff)
+    {
+        var prevValue = connectingToGameServer;
+        connectingToGameServer = onOff;
+        if (prevValue != onOff)
+            OnConnectingToGameServerValueChanged();
+    }
+    private void OnConnectingToRoomValueChanged()
+    {
+        UpdateMenus();
+    }
+    private void SetConnectingToRoomValue(bool onOff)
+    {
+        var prevValue = connectingToRoom;
+        connectingToRoom = onOff;
+        if (prevValue != onOff)
+            OnConnectingToRoomValueChanged();
+    }
+    private void OnCreatingRoomValueChanged()
+    {
+        UpdateMenus();
+    }
+    private void SetCreatingRoomValue(bool onOff)
+    {
+        var prevValue = creatingRoom;
+        creatingRoom = onOff;
+        if (prevValue != onOff)
+            OnCreatingRoomValueChanged();
     }
 
     private void SetInteractables(bool value)
@@ -131,7 +182,7 @@ public class NetworkUIBridge : MonoBehaviour
     }
     public void CreateRoom()
     {
-        creatingRoom = true;
+        SetCreatingRoomValue(true);
         string roomName = System.DateTime.Now.Ticks.ToString();
         //RoomOptions roomOptions = new RoomOptions { IsPublic = false };
         //Msf.Server.Rooms.RegisterRoom(RoomCreationHandler);
@@ -151,7 +202,7 @@ public class NetworkUIBridge : MonoBehaviour
         {
             if (controller == null)
             {
-                creatingRoom = false;
+                SetCreatingRoomValue(false);
                 Debug.LogError("Could not spawn server: " + error);
                 return;
             }
@@ -162,7 +213,7 @@ public class NetworkUIBridge : MonoBehaviour
                 return controller.Status != SpawnStatus.Finalized;
             }, (isSuccess) =>
             {
-                creatingRoom = false;
+                SetCreatingRoomValue(false);
                 RoomFinalized(roomName, isSuccess);
             }, 60f);
         });
@@ -181,7 +232,7 @@ public class NetworkUIBridge : MonoBehaviour
     private void TryJoinRoom(string roomName)
     {
         Debug.Log("Requesting games");
-        connectingToRoom = true;
+        SetConnectingToRoomValue(true);
         MsfTimer.WaitForSeconds(0.2f, () =>
         {
             Msf.Client.Matchmaker.FindGames((games) =>
@@ -197,7 +248,7 @@ public class NetworkUIBridge : MonoBehaviour
                 }
                 else
                 {
-                    connectingToRoom = false;
+                    SetConnectingToRoomValue(false);
                     Debug.LogError("Could not find room with name: " + roomName);
                 }
             });
@@ -224,7 +275,7 @@ public class NetworkUIBridge : MonoBehaviour
     }
     private void RoomAccessHandler(RoomAccessPacket accessPacket, string error)
     {
-        connectingToRoom = false;
+        SetConnectingToRoomValue(false);
         if (accessPacket == null || string.IsNullOrEmpty(accessPacket.RoomIp))
         {
             Debug.LogError("Could not access room: " + error);
