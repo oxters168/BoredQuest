@@ -5,14 +5,16 @@ public class MouseToValueManager : MonoBehaviour
 {
     [RequireInterface(typeof(IValueManager))]
     public GameObject affectedObject;
-    private IValueManager valueManager;
-    public Camera viewingCamera;
+    public IValueManager valueManager;
+    private Camera viewingCamera;
 
     private Vector2 prevMousePos;
 
     void Start()
     {
-        valueManager = affectedObject.GetComponent<IValueManager>();
+        if (valueManager == null)
+            valueManager = affectedObject.GetComponent<IValueManager>();
+        viewingCamera = FindObjectOfType<Camera>();
     }
 
     void Update()

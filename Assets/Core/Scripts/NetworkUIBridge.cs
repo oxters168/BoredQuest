@@ -27,6 +27,8 @@ public class NetworkUIBridge : MonoBehaviour
     public GameObject msfScreen;
     public GameObject selfHostScreen;
     public GameObject loadingScreen;
+    public float updateInfoTime = 3;
+    private float prevUpdateInfoTime = float.MinValue;
     //public GameObject inGameScreen;
 
     [Space(10)]
@@ -68,8 +70,14 @@ public class NetworkUIBridge : MonoBehaviour
 
     private void UpdateOnScreenInfo()
     {
-        if (gameInfo != null)
+        if (connectedToGameServer && gameInfo != null)
         {
+            if (Time.time - prevUpdateInfoTime > updateInfoTime)
+            {
+                //Msf.Client.Matchmaker.FindGames((games) => { Debug.Log("Refreshed games list"); var refreshedInfo = games.FirstOrDefault(game => game.Id == gameInfo.Id); if (refreshedInfo != null) { Debug.Log("Refreshed game info"); gameInfo = refreshedInfo; } });
+                //I'll try to figure out later why player count isn't updating
+                prevUpdateInfoTime = Time.time;
+            }
             playersLabel.text = "Players: " + gameInfo.OnlinePlayers + "/" + gameInfo.MaxPlayers;
             roomNameLabel.text = "Room code: " + gameInfo.Name;
         }
