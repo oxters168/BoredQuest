@@ -5,7 +5,7 @@ using System.Linq;
 
 public class JigsawGame : MonoBehaviour
 {
-    private Dictionary<Transform, List<JigPieceBehaviour>> clusters = new Dictionary<Transform, List<JigPieceBehaviour>>();
+    public Dictionary<Transform, List<int>> clusters = new Dictionary<Transform, List<int>>();
     public Vector3 puzzleSize = new Vector3(1, 0.1f, 1);
     public Vector2Int puzzlePieceCount = new Vector2Int(5, 5);
     public Vector2 pieceBoundaryPercent = new Vector2(0.1f, 0.1f);
@@ -23,7 +23,8 @@ public class JigsawGame : MonoBehaviour
     public UnityEngine.Events.UnityEvent OnPuzzleLoaded;
 
     private Transform jigsawParent;
-    private GameObject[] pieces;
+    public JigPieceBehaviour[] pieces;
+    private GameObject[] generatedPieces;
 
     void Awake()
     {
@@ -41,8 +42,8 @@ public class JigsawGame : MonoBehaviour
     }
     public void LoadJigsawPuzzle()
     {
-        pieces = new GameObject[puzzlePieceCount.x * puzzlePieceCount.y];
-        StartCoroutine(JigsawPuzzle.Generate(puzzlePieceCount.x, puzzlePieceCount.y, puzzleSize.x, puzzleSize.z, puzzleSize.y, 5, seed, jigsawParent, pieces, puzzleFaceMat, puzzleSideMat, puzzleBackMat, true, OnPuzzleLoadingPercent, OnPuzzleLoadCompleted));
+        generatedPieces = new GameObject[puzzlePieceCount.x * puzzlePieceCount.y];
+        StartCoroutine(JigsawPuzzle.Generate(puzzlePieceCount.x, puzzlePieceCount.y, puzzleSize.x, puzzleSize.z, puzzleSize.y, 5, seed, jigsawParent, generatedPieces, puzzleFaceMat, puzzleSideMat, puzzleBackMat, true, OnPuzzleLoadingPercent, OnPuzzleLoadCompleted));
     }
     public void DestroyJigsawPuzzle()
     {
@@ -57,12 +58,13 @@ public class JigsawGame : MonoBehaviour
 
         clusters.Clear();
         pieces = null;
+        generatedPieces = null;
     }
 
     private void OnAttachAttempt(JigBoundaryCollider sender, JigBoundaryCollider other)
     {
-        int senderPieceIndex = System.Array.IndexOf(pieces, sender.jigPiece.gameObject);
-        int otherPieceIndex = System.Array.IndexOf(pieces, other.jigPiece.gameObject);
+        int senderPieceIndex = System.Array.IndexOf(pieces, sender.jigPiece);
+        int otherPieceIndex = System.Array.IndexOf(pieces, other.jigPiece);
         var relation = GetRelation(senderPieceIndex, otherPieceIndex);
 
         if (relation != JigBoundaryCollider.BoundarySide.none && relation == sender.boundarySide)
@@ -70,8 +72,8 @@ public class JigsawGame : MonoBehaviour
             Vector3 firstPieceExpectedRelativePosition, secondPieceExpectedRelativePosition;
             CalculateExpectedRelativePositions(sender.jigPiece, other.jigPiece, relation, out firstPieceExpectedRelativePosition, out secondPieceExpectedRelativePosition);
             
-            var firstKey = GetPieceKey(sender.jigPiece);
-            var secondKey = GetPieceKey(other.jigPiece);
+            var firstKey = GetPieceKey(senderPieceIndex);
+            var secondKey = GetPieceKey(otherPieceIndex);
             if (firstKey == null)
             {
                 if (secondKey == null)
@@ -81,21 +83,21 @@ public class JigsawGame : MonoBehaviour
                     clusterKey.position = sender.jigPiece.transform.position;
                     other.jigPiece.transform.position = secondPieceExpectedRelativePosition;
 
-                    AddPieceToCluster(clusterKey, sender.jigPiece);
-                    AddPieceToCluster(clusterKey, other.jigPiece);
+                    AddPieceToCluster(clusterKey, senderPieceIndex);
+                    AddPieceToCluster(clusterKey, otherPieceIndex);
                 }
                 else
                 {
                     //Add first piece to second's cluster
                     sender.jigPiece.transform.position = firstPieceExpectedRelativePosition;
-                    AddPieceToCluster(secondKey, sender.jigPiece);
+                    AddPieceToCluster(secondKey, senderPieceIndex);
                 }
             }
             else if (secondKey == null)
             {
                 //Add second piece to first's cluster
                 other.jigPiece.transform.position = secondPieceExpectedRelativePosition;
-                AddPieceToCluster(firstKey, other.jigPiece);
+                AddPieceToCluster(firstKey, otherPieceIndex);
             }
             else if (firstKey != secondKey)
             {
@@ -141,21 +143,22 @@ public class JigsawGame : MonoBehaviour
             secondPieceExpectedRelativePosition += Vector3.right * pieceWidth;
         }
     }
-    private Transform GetPieceKey(JigPieceBehaviour pieceObject)
+    public Transform GetPieceKey(int pieceIndex)
     {
         Transform key = null;
         //KeyValuePair<Transform, GameObject[]> defaultValue = default(KeyValuePair<Transform, GameObject[]>);
-        var cluster = clusters.FirstOrDefault(pair => pair.Value.IndexOf(pieceObject) > -1);
+        var cluster = clusters.FirstOrDefault(pair => pair.Value.IndexOf(pieceIndex) > -1);
         if (!cluster.Equals(default))
             key = cluster.Key;
         return key;
     }
-    private void AddPieceToCluster(Transform clusterKey, JigPieceBehaviour piece)
+    private void AddPieceToCluster(Transform clusterKey, int pieceIndex)
     {
         //piece.GetComponent<GrabbableBase>().enabled = false;
+        var piece = pieces[pieceIndex];
         Destroy(piece.GetComponent<GrabbableBase>());
         piece.transform.SetParent(clusterKey);
-        clusters[clusterKey].Add(piece);
+        clusters[clusterKey].Add(pieceIndex);
     }
     private Transform CreateNewCluster()
     {
@@ -165,7 +168,7 @@ public class JigsawGame : MonoBehaviour
         clusterParent.AddComponent<GrabbableTransform>();
         clusterParent.name = "Cluster";
         clusterParent.transform.SetParent(transform);
-        List<JigPieceBehaviour> emptyList = new List<JigPieceBehaviour>();
+        List<int> emptyList = new List<int>();
         clusters.Add(clusterParent.transform, emptyList);
         return clusterParent.transform;
     }
@@ -197,11 +200,14 @@ public class JigsawGame : MonoBehaviour
     }
     private void OnPuzzleLoadCompleted()
     {
-        foreach (var piece in pieces)
+        pieces = new JigPieceBehaviour[generatedPieces.Length];
+        for (int i = 0; i < generatedPieces.Length; i++)
         {
+            var pieceObject = generatedPieces[i];
             //piece.AddComponent<GrabbableTransform>();
-            var pieceBehaviour = piece.AddComponent<JigPieceBehaviour>();
+            var pieceBehaviour = pieceObject.AddComponent<JigPieceBehaviour>();
             pieceBehaviour.onAttachAttempt += OnAttachAttempt;
+            pieces[i] = pieceBehaviour;
 
             int columns = puzzlePieceCount.x;
             int rows = puzzlePieceCount.y;
@@ -215,7 +221,7 @@ public class JigsawGame : MonoBehaviour
             JigBoundaryCollider currentBoundaryScript;
             currentBoundaryObject = new GameObject();
             currentBoundaryObject.name = "BottomBoundary";
-            currentBoundaryObject.transform.SetParent(piece.transform, false);
+            currentBoundaryObject.transform.SetParent(pieceObject.transform, false);
             currentBoundaryScript = currentBoundaryObject.AddComponent<JigBoundaryCollider>();
             currentBoundaryScript.jigPiece = pieceBehaviour;
             currentBoundaryScript.boundarySide = JigBoundaryCollider.BoundarySide.bottom;
@@ -224,7 +230,7 @@ public class JigsawGame : MonoBehaviour
 
             currentBoundaryObject = new GameObject();
             currentBoundaryObject.name = "RightBoundary";
-            currentBoundaryObject.transform.SetParent(piece.transform, false);
+            currentBoundaryObject.transform.SetParent(pieceObject.transform, false);
             currentBoundaryScript = currentBoundaryObject.AddComponent<JigBoundaryCollider>();
             currentBoundaryScript.jigPiece = pieceBehaviour;
             currentBoundaryScript.boundarySide = JigBoundaryCollider.BoundarySide.right;
@@ -233,7 +239,7 @@ public class JigsawGame : MonoBehaviour
 
             currentBoundaryObject = new GameObject();
             currentBoundaryObject.name = "TopBoundary";
-            currentBoundaryObject.transform.SetParent(piece.transform, false);
+            currentBoundaryObject.transform.SetParent(pieceObject.transform, false);
             currentBoundaryScript = currentBoundaryObject.AddComponent<JigBoundaryCollider>();
             currentBoundaryScript.jigPiece = pieceBehaviour;
             currentBoundaryScript.boundarySide = JigBoundaryCollider.BoundarySide.top;
@@ -242,7 +248,7 @@ public class JigsawGame : MonoBehaviour
 
             currentBoundaryObject = new GameObject();
             currentBoundaryObject.name = "LeftBoundary";
-            currentBoundaryObject.transform.SetParent(piece.transform, false);
+            currentBoundaryObject.transform.SetParent(pieceObject.transform, false);
             currentBoundaryScript = currentBoundaryObject.AddComponent<JigBoundaryCollider>();
             currentBoundaryScript.jigPiece = pieceBehaviour;
             currentBoundaryScript.boundarySide = JigBoundaryCollider.BoundarySide.left;
@@ -277,8 +283,8 @@ public class JigsawGame : MonoBehaviour
                     randY += bottomSideDiff - pieceHeight / 2;
             }
             pieceCluster.position = new Vector3(randX, 0, randY);
-            piece.transform.position = pieceCluster.position;
-            AddPieceToCluster(pieceCluster, pieceBehaviour);
+            pieceObject.transform.position = pieceCluster.position;
+            AddPieceToCluster(pieceCluster, i);
         }
             
         OnPuzzleLoaded?.Invoke();

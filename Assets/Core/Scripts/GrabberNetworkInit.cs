@@ -10,6 +10,7 @@ public class GrabberNetworkInit : NetworkBehaviour
     // Is this a client with authority over this transform?
     // This component could be on the player object or any object that has been assigned authority to this client.
     bool IsClientWithAuthority => hasAuthority && clientAuthority;
+    public float changeTolerance = 0.01f;
     
     private Movement2D Movement { get { if (_movement == null) _movement = GetComponent<Movement2D>(); return _movement; } }
     private Movement2D _movement;
@@ -111,8 +112,8 @@ public class GrabberNetworkInit : NetworkBehaviour
 
         // moved or rotated or scaled?
         // local position/rotation/scale for VR support
-        bool horizontalChanged = Mathf.Abs(prevHorizontal - horizontal) > float.Epsilon;
-        bool verticalChanged = Mathf.Abs(prevVertical - vertical) > float.Epsilon;
+        bool horizontalChanged = Mathf.Abs(prevHorizontal - horizontal) > changeTolerance;
+        bool verticalChanged = Mathf.Abs(prevVertical - vertical) > changeTolerance;
         bool changes = horizontalChanged || verticalChanged || (grab != prevGrab);
 
         // save last for next frame to compare

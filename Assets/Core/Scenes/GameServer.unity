@@ -1217,8 +1217,11 @@ MonoBehaviour:
     type: 3}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
-  spawnPrefabs: []
+  spawnPrefabs:
+  - {fileID: 544716235151496896, guid: cdab3c74d1229ec9ea67e35c1247a77d, type: 3}
   logLevel: 3
+  jigsawGamePrefab: {fileID: 544716235151496896, guid: cdab3c74d1229ec9ea67e35c1247a77d,
+    type: 3}
 --- !u!4 &1699214506
 Transform:
   m_ObjectHideFlags: 0
@@ -1396,8 +1399,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 253.5, y: 0}
-  m_SizeDelta: {x: 507, y: 0}
+  m_AnchoredPosition: {x: 269.5, y: 0}
+  m_SizeDelta: {x: 539, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1988868316
 MonoBehaviour:

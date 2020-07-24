@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &544716235151496896
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 544716235151496910}
+  - component: {fileID: 544716235151496897}
+  - component: {fileID: 7471433797960387223}
+  - component: {fileID: 7569738750163725684}
+  m_Layer: 0
+  m_Name: JigsawGame
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &544716235151496910
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544716235151496896}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &544716235151496897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544716235151496896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfe4f90cc3fb98fc1a4bf78847ea2952, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  puzzleSize: {x: 0.64, y: 0.01, z: 0.64}
+  puzzlePieceCount: {x: 5, y: 5}
+  pieceBoundaryPercent: {x: 0.33, y: 0.33}
+  boardOuterBorder: {x: 0.5, y: 0.5}
+  boardInnerBorder: {x: 0.33, y: 0.33}
+  seed: 1337
+  percentLoaded: 0
+  puzzleFaceMat: {fileID: 2100000, guid: cc0030fcff69e8d06abc6e2956523534, type: 2}
+  puzzleSideMat: {fileID: 2100000, guid: 2518885af41d2046f8fbf5a9276f0935, type: 2}
+  puzzleBackMat: {fileID: 2100000, guid: c81169c4a549a091ca2727e1cfb23fdc, type: 2}
+  OnPuzzleLoaded:
+    m_PersistentCalls:
+      m_Calls: []
+  pieces: []
+--- !u!114 &7471433797960387223
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544716235151496896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6eb5591560d4637d6beaff99b31ce087, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
+  clientAuthority: 0
+  changeTolerance: 0.01
+--- !u!114 &7569738750163725684
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544716235151496896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneId: 0
+  serverOnly: 0
+  m_AssetId: 
+  hasSpawned: 0
