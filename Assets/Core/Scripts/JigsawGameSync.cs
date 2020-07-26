@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using Mirror;
 using System.ComponentModel;
-using System.Collections.Generic;
 
 public class JigsawGameSync : NetworkBehaviour
 {
@@ -16,7 +15,7 @@ public class JigsawGameSync : NetworkBehaviour
     private JigsawGame jigsawGame { get { if (_jigsawGame == null) _jigsawGame = GetComponent<JigsawGame>(); return _jigsawGame; } }
     private JigsawGame _jigsawGame;
 
-    private JigsawGameWrapper currentState;
+    private JigsawState currentState;
 
     void Update()
     {
@@ -44,7 +43,7 @@ public class JigsawGameSync : NetworkBehaviour
                         // local position/rotation for VR support
                         using (PooledNetworkWriter writer = NetworkWriterPool.GetWriter())
                         {
-                            SerializeIntoWriter(writer, JigsawGameWrapper.FromJigsawGame(jigsawGame));
+                            SerializeIntoWriter(writer, JigsawState.GetCurrentState(jigsawGame));
 
                             // send to server
                             CmdClientToServerSync(writer.ToArray());
@@ -90,33 +89,13 @@ public class JigsawGameSync : NetworkBehaviour
             else
                 changed = true;
         }
-        //var horizontal = Movement.GetAxis("Horizontal");
-        //var vertical = Movement.GetAxis("Vertical");
-        //var grab = Movement.GetToggle("Grab");
 
-        // moved or rotated or scaled?
-        // local position/rotation/scale for VR support
-        //bool horizontalChanged = Mathf.Abs(prevHorizontal - horizontal) > float.Epsilon;
-        //bool verticalChanged = Mathf.Abs(prevVertical - vertical) > float.Epsilon;
-        //bool changes = horizontalChanged || verticalChanged || (grab != prevGrab);
-
-        // save last for next frame to compare
-        // (only if change was detected. otherwise slow moving objects might
-        //  never sync because of C#'s float comparison tolerance. see also:
-        //  https://github.com/vis2k/Mirror/pull/428)
-        if (changed)
-        {
-            // local position/rotation for VR support
-            //prevHorizontal = horizontal;
-            //prevVertical = vertical;
-            //prevGrab = grab;
-        }
         return changed;
     }
 
     public override bool OnSerialize(NetworkWriter writer, bool initialState)
     {
-        SerializeIntoWriter(writer, JigsawGameWrapper.FromJigsawGame(jigsawGame));
+        SerializeIntoWriter(writer, JigsawState.GetCurrentState(jigsawGame));
         return true;
     }
     public override void OnDeserialize(NetworkReader reader, bool initialState)
@@ -127,113 +106,39 @@ public class JigsawGameSync : NetworkBehaviour
     // serialization is needed by OnSerialize and by manual sending from authority
     // public only for tests
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static void SerializeIntoWriter(NetworkWriter writer, JigsawGameWrapper currentState)
+    public static void SerializeIntoWriter(NetworkWriter writer, JigsawState currentState)
     {
         // serialize position, rotation, scale
         // note: we do NOT compress rotation.
         //       we are CPU constrained, not bandwidth constrained.
         //       the code needs to WORK for the next 5-10 years of development.
-        var clusters = currentState.clusters;
-        if (clusters != null)
-        {
-            //var pieces = currentState.pieces;
-            foreach (var cluster in clusters)
-            {
-                foreach (var pieceInCluster in cluster.indices)
-                {
-                    //var pieceIndex = System.Array.IndexOf(pieces, pieceInCluster);
-                    writer.WriteInt32(pieceInCluster);
-                }
-                writer.WriteInt32(-1);
-                writer.WriteVector3(cluster.position);
-                writer.WriteQuaternion(cluster.rotation);
-            }
-        }
-        writer.WriteInt32(int.MinValue);
+        JigsawState.Serialize(writer, currentState);
     }
     private void DeserializeFromReader(NetworkReader reader)
     {
-        List<ClusterWrapper> clusters = new List<ClusterWrapper>();
-        int currentIndex = int.MaxValue;
-        ClusterWrapper currentCluster = new ClusterWrapper();
-        while (currentIndex != int.MinValue)
-        {
-            if (currentIndex < 0)
-            {
-                currentCluster.position = reader.ReadVector3();
-                currentCluster.rotation = reader.ReadQuaternion();
-                clusters.Add(currentCluster);
-                currentCluster = new ClusterWrapper();
-            }
-            else if (currentIndex != int.MaxValue)
-                currentCluster.indices.Add(currentIndex);
-            
-            currentIndex = reader.ReadInt32();
-        }
-
-        currentState = new JigsawGameWrapper() { clusters = clusters };
+        currentState = JigsawState.Deserialize(reader);
     }
     private void ApplyValues()
     {
-        if (currentState != null && jigsawGame.pieces != null && currentState.clusters.Count > 0)
-        {
-            int columns = jigsawGame.puzzlePieceCount.x;
-            int rows = jigsawGame.puzzlePieceCount.y;
-            float pieceWidth = jigsawGame.puzzleSize.x / columns;
-            float pieceHeight = jigsawGame.puzzleSize.z / rows;
+        JigsawState.ApplyToGame(jigsawGame, currentState);
+    }
 
-            foreach (var cluster in currentState.clusters)
-            {
-                if (cluster.indices.Count > 0)
-                {
-                    var firstIndex = cluster.indices[0];
-                    int mainColIndex = firstIndex % columns;
-                    int mainRowIndex = firstIndex / columns;
-
-                    var clusterParent = jigsawGame.GetPieceKey(firstIndex);
-                    if (clusterParent != null)
-                    {
-                        clusterParent.position = cluster.position;
-                        clusterParent.rotation = cluster.rotation;
-                        foreach (var pieceIndex in cluster.indices)
-                        {
-                            var pieceParent = jigsawGame.GetPieceKey(pieceIndex);
-                            if (pieceParent != clusterParent)
-                            {
-                                int currentColIndex = pieceIndex % columns;
-                                int currentRowIndex = pieceIndex / columns;
-                                int horOffset = currentColIndex - mainColIndex;
-                                int verOffset = currentRowIndex - mainRowIndex;
-
-                                var pieceObject = jigsawGame.pieces[pieceIndex].transform;
-                                pieceObject.SetParent(clusterParent);
-                                pieceObject.localPosition = new Vector3(horOffset * pieceWidth, 0, verOffset * pieceHeight);
-
-                                jigsawGame.clusters[pieceParent].Remove(pieceIndex);
-                                jigsawGame.clusters[clusterParent].Add(pieceIndex);
-                            }
-                        }
-                    }
-                }
-            }
-            /*int currentIndex = 0;
-            foreach (var clusterPair in jigsawGame.clusters)
-            {
-                var currentCluster = currentState.clusters[currentIndex++];
-                clusterPair.Key.position = currentCluster.position;
-                clusterPair.Key.rotation = currentCluster.rotation;
-
-                clusterPair.Value.Clear();
-                for (int i = 0; i < currentCluster.indices.Count; i++)
-                {
-                    var pieceIndex = currentCluster.indices[i];
-                    var currentPiece = jigsawGame.pieces[pieceIndex];
-                    if (i == 0)
-                        currentPiece.transform.SetParent(clusterPair.Key, false);
-                    clusterPair.Value.Add(pieceIndex);
-                }
-            }*/
-        }
+    [Command(ignoreAuthority = true)]
+    public void CmdSetColumnsValue(int columns)
+    {
+        //var jigsawGame = FindObjectOfType<JigsawGame>();
+        jigsawGame.puzzlePieceCount = new Vector2Int(columns, jigsawGame.puzzlePieceCount.y);
+    }
+    [Command(ignoreAuthority = true)]
+    public void CmdSetRowsValue(int rows)
+    {
+        //var jigsawGame = FindObjectOfType<JigsawGame>();
+        jigsawGame.puzzlePieceCount = new Vector2Int(jigsawGame.puzzlePieceCount.x, rows);
+    }
+    [Command(ignoreAuthority = true)]
+    public void CmdLoadJigsawPuzzle()
+    {
+        jigsawGame.LoadJigsawPuzzle();
     }
 
     // local authority client sends sync message to server for broadcasting
@@ -255,38 +160,5 @@ public class JigsawGameSync : NetworkBehaviour
 
         // set dirty so that OnSerialize broadcasts it
         SetDirtyBit(1UL);
-    }
-
-    public class JigsawGameWrapper
-    {
-        public List<ClusterWrapper> clusters = new List<ClusterWrapper>();
-
-        public static JigsawGameWrapper FromJigsawGame(JigsawGame game)
-        {
-            var wrapped = new JigsawGameWrapper();
-
-            var clusters = game.clusters;
-            if (clusters != null)
-            {
-                //var pieces = currentState.pieces;
-                foreach (var cluster in clusters)
-                {
-                    wrapped.clusters.Add(new ClusterWrapper()
-                    {
-                        position = cluster.Key.position,
-                        rotation = cluster.Key.rotation,
-                        indices = cluster.Value
-                    });
-                }
-            }
-
-            return wrapped;
-        }
-    }
-    public class ClusterWrapper
-    {
-        public Vector3 position;
-        public Quaternion rotation;
-        public List<int> indices = new List<int>();
     }
 }

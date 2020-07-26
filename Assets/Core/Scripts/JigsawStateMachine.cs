@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using TMPro;
+using Mirror;
 
 public class JigsawStateMachine : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class JigsawStateMachine : MonoBehaviour
 
     public Vector2Int maxPieceCount = new Vector2Int(12, 12);
     public TMP_InputField columnsField, rowsField;
+    private string prevColumnsValue, prevRowsValue;
 
     //private JigsawGame jigsawGame;
 
@@ -19,6 +21,19 @@ public class JigsawStateMachine : MonoBehaviour
         //jigsawGame = FindObjectOfType<JigsawGame>();
         gameSetupPanel.SetActive(false);
         inGamePanel.SetActive(false);
+    }
+    void Update()
+    {
+        var currentColumnsValue = columnsField.text;
+        if (currentColumnsValue != prevColumnsValue)
+            OnColumnsValueChanged();
+
+        var currentRowsValue = rowsField.text;
+        if (currentRowsValue != prevRowsValue)
+            OnRowsValueChanged();
+
+        prevColumnsValue = currentColumnsValue;
+        prevRowsValue = currentRowsValue;
     }
 
     public void StartGame()
@@ -34,7 +49,7 @@ public class JigsawStateMachine : MonoBehaviour
         var jigsawGame = FindObjectOfType<JigsawGame>();
         if (state == GameState.inGame && state != currentState)
             LoadJigsaw();
-        else if (currentState == GameState.inGame && state != currentState)
+        else if (currentState == GameState.inGame && state != currentState && jigsawGame != null)
             jigsawGame.DestroyJigsawPuzzle();
         
         gameSetupPanel.SetActive(state == GameState.gameSetup);
@@ -47,26 +62,47 @@ public class JigsawStateMachine : MonoBehaviour
         return currentState;
     }
 
-    private void LoadJigsaw()
+    private void OnColumnsValueChanged()
     {
         int columns = 0;
-        int rows = 0;
         try
         {
             columns = System.Convert.ToInt32(columnsField.text);
         }
         catch {}
+        SetColumnsValue(columns);
+    }
+    private void OnRowsValueChanged()
+    {
+        int rows = 0;
         try
         {
             rows = System.Convert.ToInt32(rowsField.text);
         }
         catch {}
-        columns = Mathf.Clamp(columns, 2, maxPieceCount.x);
-        rows = Mathf.Clamp(rows, 2, maxPieceCount.y);
+        SetRowsValue(rows);
+    }
 
-        var jigsawGame = FindObjectOfType<JigsawGame>();
-        jigsawGame.seed = Random.Range(1337, 42070);
-        jigsawGame.puzzlePieceCount = new Vector2Int(columns, rows);
-        jigsawGame.LoadJigsawPuzzle();
+    private void SetColumnsValue(int columns)
+    {
+        columns = Mathf.Clamp(columns, 2, maxPieceCount.x);
+        var jigsawGame = FindObjectOfType<JigsawGameSync>();
+        if (jigsawGame != null)
+            jigsawGame.CmdSetColumnsValue(columns);
+    }
+    private void SetRowsValue(int rows)
+    {
+        rows = Mathf.Clamp(rows, 2, maxPieceCount.y);
+        var jigsawGame = FindObjectOfType<JigsawGameSync>();
+        if (jigsawGame != null)
+            jigsawGame.CmdSetRowsValue(rows);
+    }
+    private void LoadJigsaw()
+    {
+        var jigsawGame = FindObjectOfType<JigsawGameSync>();
+        if (jigsawGame != null)
+            jigsawGame.CmdLoadJigsawPuzzle();
+        else
+            Debug.LogError("Jigsaw game does not exist?!");
     }
 }

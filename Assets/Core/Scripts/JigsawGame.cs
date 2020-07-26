@@ -13,6 +13,8 @@ public class JigsawGame : MonoBehaviour
     public Vector2 boardInnerBorder = new Vector2(0.66f, 0.66f);
     public int seed = 1337;
     public float percentLoaded;
+    public bool isLoading { get; private set; }
+    public bool isLoaded { get; private set; }
 
     [Space(10)]
     public Material puzzleFaceMat;
@@ -42,12 +44,15 @@ public class JigsawGame : MonoBehaviour
     }
     public void LoadJigsawPuzzle()
     {
+        isLoading = true;
         generatedPieces = new GameObject[puzzlePieceCount.x * puzzlePieceCount.y];
         StartCoroutine(JigsawPuzzle.Generate(puzzlePieceCount.x, puzzlePieceCount.y, puzzleSize.x, puzzleSize.z, puzzleSize.y, 5, seed, jigsawParent, generatedPieces, puzzleFaceMat, puzzleSideMat, puzzleBackMat, true, OnPuzzleLoadingPercent, OnPuzzleLoadCompleted));
     }
     public void DestroyJigsawPuzzle()
     {
         percentLoaded = 0;
+        isLoaded = false;
+        isLoading = false;
 
         if (pieces != null)
             for (int i = 0; i < pieces.Length; i++)
@@ -287,6 +292,8 @@ public class JigsawGame : MonoBehaviour
             AddPieceToCluster(pieceCluster, i);
         }
             
+        isLoading = false;
+        isLoaded = true;
         OnPuzzleLoaded?.Invoke();
     }
 }
