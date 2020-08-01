@@ -1,8 +1,10 @@
 ﻿using System.Collections;
 using UnityEngine;
+using System.IO;
 
 public class InfoLogger : MonoBehaviour
 {
+    public string logPath;
     string myLog;
     Queue myLogQueue = new Queue();
 
@@ -34,6 +36,17 @@ public class InfoLogger : MonoBehaviour
         foreach(string mylog in myLogQueue)
         {
             myLog += mylog;
+        }
+
+        if (!string.IsNullOrEmpty(logPath))
+        {
+            if (!File.Exists(logPath))
+                File.Create(logPath);
+                
+            using (var logOutput = File.AppendText(logPath))
+            {
+                logOutput.WriteLine(logString);
+            }
         }
     }
 

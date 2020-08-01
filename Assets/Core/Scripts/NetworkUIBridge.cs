@@ -13,23 +13,11 @@ public class RoomEvent : UnityEvent<string, bool> {}
 
 public class NetworkUIBridge : MonoBehaviour
 {
+    public const string ROOM_NAME_URL_PARAM = "roomid";
+    public string gameUrl = "https://oxgames.co/jigether";
     private NetworkManager networkManager;
     private TelepathyTransport telepathyTransport;
     private Mirror.Websocket.WebsocketTransport websocketTransport;
-
-    [Space(10)]
-    public TMPro.TMP_InputField roomNameField;
-    public TMPro.TextMeshProUGUI playersLabel;
-    public TMPro.TextMeshProUGUI roomNameLabel;
-    public UnityEngine.UI.Selectable[] enabledOnlyIfConnected;
-
-    [Space(10)]
-    public GameObject msfScreen;
-    public GameObject selfHostScreen;
-    public GameObject loadingScreen;
-    public float updateInfoTime = 3;
-    private float prevUpdateInfoTime = float.MinValue;
-    //public GameObject inGameScreen;
 
     [Space(10)]
     public ConnectionEvent OnMSFConnectionChanged;
@@ -41,18 +29,16 @@ public class NetworkUIBridge : MonoBehaviour
     private bool prevClientConnected;
     private bool prevMSFSignedIn;
 
-    private bool creatingRoom;
-    private bool connectingToRoom;
-    private bool connectingToGameServer;
-    private bool connectedToGameServer;
-    private GameInfoPacket gameInfo;
+    public bool creatingRoom { get; private set; }
+    public bool connectingToRoom { get; private set; }
+    public bool connectingToGameServer { get; private set; }
+    public bool connectedToGameServer { get; private set; }
+    public GameInfoPacket gameInfo;// { get; private set; }
     private JigsawStateMachine stateMachine;
-    //private string nameOfRoom;
-    //private int roomId;
 
     void Awake()
     {
-        SetInteractables(false);
+        //SetInteractables(false);
         networkManager = FindObjectOfType<NetworkManager>();
         stateMachine = FindObjectOfType<JigsawStateMachine>();
         telepathyTransport = networkManager.GetComponent<TelepathyTransport>();
@@ -65,33 +51,13 @@ public class NetworkUIBridge : MonoBehaviour
 
         CheckChanges();
         //UpdateMenus();
-        UpdateOnScreenInfo();
+        //UpdateOnScreenInfo();
     }
 
-    private void UpdateOnScreenInfo()
-    {
-        if (connectedToGameServer && gameInfo != null)
-        {
-            if (Time.time - prevUpdateInfoTime > updateInfoTime)
-            {
-                //Msf.Client.Matchmaker.FindGames((games) => { Debug.Log("Refreshed games list"); var refreshedInfo = games.FirstOrDefault(game => game.Id == gameInfo.Id); if (refreshedInfo != null) { Debug.Log("Refreshed game info"); gameInfo = refreshedInfo; } });
-                //I'll try to figure out later why player count isn't updating
-                prevUpdateInfoTime = Time.time;
-            }
-            playersLabel.text = "Players: " + gameInfo.OnlinePlayers + "/" + gameInfo.MaxPlayers;
-            roomNameLabel.text = "Room code: " + gameInfo.Name;
-        }
-    }
-    private void UpdateMenus()
-    {
-        msfScreen.SetActive(!creatingRoom && !connectingToRoom && !connectingToGameServer && !connectedToGameServer);
-        loadingScreen.SetActive(creatingRoom || connectingToRoom || connectingToGameServer);
-        //inGameScreen.SetActive(connectedToGameServer);
-    }
     private void OnConnectedToGameServerValueChanged()
     {
-        UpdateMenus();
-        stateMachine.SetState(connectedToGameServer ? JigsawStateMachine.GameState.gameSetup : JigsawStateMachine.GameState.none);
+        //UpdateMenus();
+        //stateMachine.SetState(connectedToGameServer ? JigsawStateMachine.GameState.gameSetup : JigsawStateMachine.GameState.none);
     }
     private void SetConnectedToGameServerValue(bool onOff)
     {
@@ -102,7 +68,7 @@ public class NetworkUIBridge : MonoBehaviour
     }
     private void OnConnectingToGameServerValueChanged()
     {
-        UpdateMenus();
+        //UpdateMenus();
     }
     private void SetConnectingToGameServerValue(bool onOff)
     {
@@ -113,7 +79,7 @@ public class NetworkUIBridge : MonoBehaviour
     }
     private void OnConnectingToRoomValueChanged()
     {
-        UpdateMenus();
+        //UpdateMenus();
     }
     private void SetConnectingToRoomValue(bool onOff)
     {
@@ -124,7 +90,7 @@ public class NetworkUIBridge : MonoBehaviour
     }
     private void OnCreatingRoomValueChanged()
     {
-        UpdateMenus();
+        //UpdateMenus();
     }
     private void SetCreatingRoomValue(bool onOff)
     {
@@ -134,11 +100,6 @@ public class NetworkUIBridge : MonoBehaviour
             OnCreatingRoomValueChanged();
     }
 
-    private void SetInteractables(bool value)
-    {
-        foreach (var mb in enabledOnlyIfConnected)
-            mb.interactable = value;
-    }
     private void CheckChanges()
     {
         bool isMSFConnected = Msf.Connection.IsConnected;
@@ -159,7 +120,7 @@ public class NetworkUIBridge : MonoBehaviour
     }
     private void MSFConnectionChanged(bool isConnected)
     {
-        SetInteractables(isConnected);
+        //SetInteractables(isConnected);
         if (isConnected)
             Msf.Client.Auth.SignInAsGuest(SignInHandler);
 
@@ -171,6 +132,10 @@ public class NetworkUIBridge : MonoBehaviour
     }
     private void MSFSignedInChanged(bool isSignedIn)
     {
+        #if UNITY_WEBGL
+        AutoConnectUsingUrlParam();
+        #endif
+
         OnMSFSignedIn?.Invoke(isSignedIn);
     }
     private void RoomFinalized(string roomName, bool successfully)
@@ -184,14 +149,39 @@ public class NetworkUIBridge : MonoBehaviour
         OnRoomFinalized?.Invoke(roomName, successfully);
     }
 
+    public void AutoConnectUsingUrlParam()
+    {
+        string roomid = URLReader.GetQueryParam(ROOM_NAME_URL_PARAM);
+        if (!string.IsNullOrEmpty(roomid))
+            TryJoinRoom(roomid);
+    }
+    public string GenerateRoomUrl()
+    {
+        string outputUrl = gameUrl;
+        if (gameInfo != null)
+            outputUrl += "?" + ROOM_NAME_URL_PARAM + "=" + gameInfo.Name;
+        return outputUrl;
+    }
+    public void CopyUrlToClipboard()
+    {
+        TextEditor te = new TextEditor();
+        te.text = GenerateRoomUrl();
+        te.SelectAll();
+        te.Copy();
+    }
+
     public void DirectJoin()
     {
+        //networkManager.networkAddress = "178.62.6.45";
+        networkManager.networkAddress = "127.0.0.1";
+        websocketTransport.port = 7778;
         networkManager.StartClient();
     }
     public void CreateRoom()
     {
         SetCreatingRoomValue(true);
-        string roomName = System.DateTime.Now.Ticks.ToString();
+        //string roomName = System.DateTime.Now.Ticks.ToString();
+        string roomName = UnityHelpers.GuidHelpers.Encode(System.Guid.NewGuid());
         //RoomOptions roomOptions = new RoomOptions { IsPublic = false };
         //Msf.Server.Rooms.RegisterRoom(RoomCreationHandler);
         var spawnOptions = new DictionaryOptions();
@@ -229,13 +219,17 @@ public class NetworkUIBridge : MonoBehaviour
 
     public void JoinGame()
     {
-        var roomName = roomNameField.text;
+        var roomName = FindObjectOfType<MenuManager>().roomNameField.text;
+        //var roomName = roomNameField.text;
         TryJoinRoom(roomName);
     }
     private void JoinGame(int roomId)
     {
         Debug.Log("Requesting access to room " + roomId);
-        Msf.Client.Rooms.GetAccess(roomId, RoomAccessHandler);
+        SetConnectingToRoomValue(false);
+        MsfDictKeys.roomId = roomId.ToString();
+        Barebones.Bridges.Mirror.MirrorRoomClient.Instance.StartClient();
+        //Msf.Client.Rooms.GetAccess(roomId, RoomAccessHandler);
     }
     private void TryJoinRoom(string roomName)
     {
@@ -284,7 +278,7 @@ public class NetworkUIBridge : MonoBehaviour
     private void RoomAccessHandler(RoomAccessPacket accessPacket, string error)
     {
         SetConnectingToRoomValue(false);
-        if (accessPacket == null || string.IsNullOrEmpty(accessPacket.RoomIp))
+        /*if (accessPacket == null || string.IsNullOrEmpty(accessPacket.RoomIp))
         {
             Debug.LogError("Could not access room: " + error);
             return;
@@ -294,6 +288,6 @@ public class NetworkUIBridge : MonoBehaviour
         networkManager.networkAddress = accessPacket.RoomIp;
         //telepathyTransport.port = (ushort)accessPacket.RoomPort;
         websocketTransport.port = accessPacket.RoomPort;
-        networkManager.StartClient();
+        networkManager.StartClient();*/
     }
 }

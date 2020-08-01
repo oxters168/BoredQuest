@@ -126,19 +126,22 @@ public class JigsawGameSync : NetworkBehaviour
     [Command(ignoreAuthority = true)]
     public void CmdSetColumnsValue(int columns)
     {
-        //var jigsawGame = FindObjectOfType<JigsawGame>();
         jigsawGame.puzzlePieceCount = new Vector2Int(columns, jigsawGame.puzzlePieceCount.y);
     }
     [Command(ignoreAuthority = true)]
     public void CmdSetRowsValue(int rows)
     {
-        //var jigsawGame = FindObjectOfType<JigsawGame>();
         jigsawGame.puzzlePieceCount = new Vector2Int(jigsawGame.puzzlePieceCount.x, rows);
     }
     [Command(ignoreAuthority = true)]
     public void CmdLoadJigsawPuzzle()
     {
         jigsawGame.LoadJigsawPuzzle();
+    }
+    [Command(ignoreAuthority = true)]
+    public void CmdDestroyJigsawPuzzle()
+    {
+        jigsawGame.DestroyJigsawPuzzle();
     }
 
     // local authority client sends sync message to server for broadcasting

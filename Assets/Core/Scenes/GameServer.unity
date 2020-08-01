@@ -595,6 +595,52 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &735237156
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 735237158}
+  - component: {fileID: 735237157}
+  m_Layer: 0
+  m_Name: Info Logger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &735237157
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 735237156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8af6d9dacbf2b1cd697fe9274f5c2194, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logPath: ~/GameServerLog.txt
+  frames: 10
+  outputLabel: {fileID: 1988868316}
+--- !u!4 &735237158
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 735237156}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 244.32275, y: 159.23677, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &846694834
 GameObject:
   m_ObjectHideFlags: 0
@@ -687,7 +733,7 @@ RectTransform:
   m_Children:
   - {fileID: 1360990510}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -758,7 +804,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1090471580
 GameObject:
@@ -1065,7 +1111,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
-  serverIp: 127.0.0.1
+  serverIp: 178.62.6.45
   serverPort: 5000
   minTimeToConnect: 0.5
   maxTimeToConnect: 4
@@ -1269,10 +1315,10 @@ MonoBehaviour:
   initModulesAtStart: 1
   autoLoadUserProfile: 0
   disconnectIfProfileFailed: 0
-  masterIp: 127.0.0.1
+  masterIp: 178.62.6.45
   masterPort: 5000
   terminateRoomWhenLastPlayerQuits: 1
-  terminateEmptyRoomInSeconds: 0
+  terminateEmptyRoomInSeconds: 60
   autoStartInEditor: 0
   startServerAsHost: 1
 --- !u!4 &1759193319
@@ -1373,7 +1419,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1988868315}
   - component: {fileID: 1988868317}
-  - component: {fileID: 1988868318}
   - component: {fileID: 1988868316}
   - component: {fileID: 1988868319}
   m_Layer: 5
@@ -1521,20 +1566,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1988868314}
   m_CullTransparentMesh: 0
---- !u!114 &1988868318
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1988868314}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8af6d9dacbf2b1cd697fe9274f5c2194, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  frames: 10
-  outputLabel: {fileID: 1988868316}
 --- !u!114 &1988868319
 MonoBehaviour:
   m_ObjectHideFlags: 0

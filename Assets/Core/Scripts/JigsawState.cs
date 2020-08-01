@@ -51,6 +51,8 @@ public class JigsawState
             jigsawGame.seed = currentState.seed;
             if (!jigsawGame.isLoaded && !jigsawGame.isLoading && (currentState.isLoaded || currentState.isLoading))
                 jigsawGame.LoadJigsawPuzzle();
+            else if ((jigsawGame.isLoaded || jigsawGame.isLoading) && !currentState.isLoaded && !currentState.isLoading)
+                jigsawGame.DestroyJigsawPuzzle();
 
             if (jigsawGame.pieces != null && currentState.clusters.Count > 0)
             {

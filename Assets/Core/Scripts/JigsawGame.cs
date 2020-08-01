@@ -28,6 +28,8 @@ public class JigsawGame : MonoBehaviour
     public JigPieceBehaviour[] pieces;
     private GameObject[] generatedPieces;
 
+    private Coroutine loadingRoutine;
+
     void Awake()
     {
         jigsawParent = new GameObject().transform;
@@ -46,13 +48,14 @@ public class JigsawGame : MonoBehaviour
     {
         isLoading = true;
         generatedPieces = new GameObject[puzzlePieceCount.x * puzzlePieceCount.y];
-        StartCoroutine(JigsawPuzzle.Generate(puzzlePieceCount.x, puzzlePieceCount.y, puzzleSize.x, puzzleSize.z, puzzleSize.y, 5, seed, jigsawParent, generatedPieces, puzzleFaceMat, puzzleSideMat, puzzleBackMat, true, OnPuzzleLoadingPercent, OnPuzzleLoadCompleted));
+        loadingRoutine = StartCoroutine(JigsawPuzzle.Generate(puzzlePieceCount.x, puzzlePieceCount.y, puzzleSize.x, puzzleSize.z, puzzleSize.y, 5, seed, jigsawParent, generatedPieces, puzzleFaceMat, puzzleSideMat, puzzleBackMat, true, OnPuzzleLoadingPercent, OnPuzzleLoadCompleted));
     }
     public void DestroyJigsawPuzzle()
     {
         percentLoaded = 0;
         isLoaded = false;
         isLoading = false;
+        StopCoroutine(loadingRoutine);
 
         if (pieces != null)
             for (int i = 0; i < pieces.Length; i++)
@@ -64,6 +67,7 @@ public class JigsawGame : MonoBehaviour
         clusters.Clear();
         pieces = null;
         generatedPieces = null;
+        loadingRoutine = null;
     }
 
     private void OnAttachAttempt(JigBoundaryCollider sender, JigBoundaryCollider other)

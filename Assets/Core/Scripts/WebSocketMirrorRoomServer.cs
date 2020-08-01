@@ -10,12 +10,12 @@ public class WebSocketMirrorRoomServer : MirrorRoomServer
     //    base.Start();
     //    networkManager = FindObjectOfType<NetworkManager>();
     //}
-    protected override void OnInitialize()
+    /*protected override void OnInitialize()
     {
         logger.Log(Barebones.Logging.LogLevel.Debug, "Initializing room server");
         base.OnInitialize();
         //networkManager.StartServer();
-    }
+    }*/
 
     public override void SetPort(int port)
     {

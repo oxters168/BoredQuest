@@ -234,7 +234,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
-  serverIp: 127.0.0.1
+  serverIp: 178.62.6.45
   serverPort: 5000
   minTimeToConnect: 0.5
   maxTimeToConnect: 4
@@ -422,7 +422,7 @@ MonoBehaviour:
   targetFrameRate: 30
   logLevel: 0
   usePublicIp: 0
-  serverIP: localhost
+  serverIP: 178.62.6.45
   serverPort: 5000
   autoStartInEditor: 1
 --- !u!4 &1005001217
@@ -676,12 +676,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   spawnerLogLevel: 0
-  machineIp: 127.0.0.1
+  machineIp: 178.62.6.45
   usePublicIp: 0
-  executableFilePath: /home/oxters168/Documents/Projects/Builds/BoredQuest/Linux/GameServer/GameServer.x86_64
-  spawnInBatchmode: 1
+  executableFilePath: ../GameServer/GameServer.x86_64
+  spawnInBatchmode: 0
   maxProcesses: 5
-  spawnWebSocketServers: 1
+  spawnWebSocketServers: 0
   region: 
   killProcessesWhenAppQuits: 1
   autoStartInEditor: 1
