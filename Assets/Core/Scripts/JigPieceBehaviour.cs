@@ -3,7 +3,7 @@ using UnityHelpers;
 
 public class JigPieceBehaviour : MonoBehaviour
 {
-    private GrabbableBase GrabbableSelf { get { if (_grabbableSelf == null) _grabbableSelf = GetComponentInParent<GrabbableBase>(); return _grabbableSelf; } }
+    public GrabbableBase GrabbableSelf { get { if (_grabbableSelf == null) _grabbableSelf = GetComponentInParent<GrabbableBase>(); return _grabbableSelf; } }
     private GrabbableBase _grabbableSelf;
     public delegate void OnAttachAttemptHandler(JigBoundaryCollider caller, JigBoundaryCollider other);
     public event OnAttachAttemptHandler onAttachAttempt;
@@ -27,7 +27,8 @@ public class JigPieceBehaviour : MonoBehaviour
     {
         //Debug.Log("Trigger staying");
         var otherJigBoundary = colInfo.collidedWith.GetComponent<JigBoundaryCollider>();
-        if (otherJigBoundary != null && justUngrabbed)
+        var otherJigPiece = colInfo.collidedWith.GetComponentInParent<JigPieceBehaviour>();
+        if (otherJigBoundary != null && otherJigPiece != null && justUngrabbed && otherJigPiece.GrabbableSelf.GetGrabCount() <= 0)
             onAttachAttempt?.Invoke(colInfo.sender.GetComponent<JigBoundaryCollider>(), otherJigBoundary);
     }
 }
