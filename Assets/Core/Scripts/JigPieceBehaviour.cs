@@ -11,10 +11,6 @@ public class JigPieceBehaviour : MonoBehaviour
     private int prevGrabberCount;
     private bool justUngrabbed;
 
-    //void Awake()
-    //{
-    //    grabbableSelf = GetComponent<IGrabbable>();
-    //}
     void Update()
     {
         //var grabbableSelf = GetComponentInParent<GrabbableBase>();
@@ -28,7 +24,7 @@ public class JigPieceBehaviour : MonoBehaviour
         //Debug.Log("Trigger staying");
         var otherJigBoundary = colInfo.collidedWith.GetComponent<JigBoundaryCollider>();
         var otherJigPiece = colInfo.collidedWith.GetComponentInParent<JigPieceBehaviour>();
-        if (otherJigBoundary != null && otherJigPiece != null && justUngrabbed && otherJigPiece.GrabbableSelf.GetGrabCount() <= 0)
+        if (otherJigBoundary != null && otherJigPiece != null && justUngrabbed && GrabbableSelf.GetGrabCount() <= 0 && otherJigPiece.GrabbableSelf.GetGrabCount() <= 0)
             onAttachAttempt?.Invoke(colInfo.sender.GetComponent<JigBoundaryCollider>(), otherJigBoundary);
     }
 }

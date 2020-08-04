@@ -38,7 +38,7 @@ public class InfoLogger : MonoBehaviour
             myLog += mylog;
         }
 
-        if (!string.IsNullOrEmpty(logPath))
+        if (!string.IsNullOrEmpty(logPath) && Directory.Exists(logPath))
         {
             if (!File.Exists(logPath))
                 File.Create(logPath);

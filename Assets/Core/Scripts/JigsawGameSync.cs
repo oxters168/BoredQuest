@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Mirror;
 using System.ComponentModel;
+using UnityHelpers;
 
 public class JigsawGameSync : NetworkBehaviour
 {
@@ -15,6 +16,7 @@ public class JigsawGameSync : NetworkBehaviour
     private JigsawGame jigsawGame { get { if (_jigsawGame == null) _jigsawGame = GetComponent<JigsawGame>(); return _jigsawGame; } }
     private JigsawGame _jigsawGame;
 
+    private JigsawState changeInState;
     private JigsawState currentState;
 
     void Update()
@@ -43,7 +45,7 @@ public class JigsawGameSync : NetworkBehaviour
                         // local position/rotation for VR support
                         using (PooledNetworkWriter writer = NetworkWriterPool.GetWriter())
                         {
-                            SerializeIntoWriter(writer, JigsawState.GetCurrentState(jigsawGame));
+                            SerializeIntoWriter(writer, currentState, JigsawState.GetCurrentState(jigsawGame), changeTolerance);
 
                             // send to server
                             CmdClientToServerSync(writer.ToArray());
@@ -77,8 +79,8 @@ public class JigsawGameSync : NetworkBehaviour
                     {
                         var clusterParent = jigsawGame.GetPieceKey(cluster.indices[0]);
                         var indicesChanged = jigsawGame.clusters[clusterParent].Count != cluster.indices.Count;
-                        var clusterMoved = Vector3.Distance(clusterParent.position, cluster.position) > changeTolerance;
-                        var clusterRotated = Quaternion.Angle(clusterParent.rotation, cluster.rotation) > changeTolerance;
+                        var clusterMoved = !clusterParent.position.EqualTo(cluster.position, changeTolerance);
+                        var clusterRotated = !clusterParent.rotation.EqualTo(cluster.rotation, changeTolerance);
 
                         changed = indicesChanged || clusterMoved || clusterRotated;
                         if (changed)
@@ -95,7 +97,7 @@ public class JigsawGameSync : NetworkBehaviour
 
     public override bool OnSerialize(NetworkWriter writer, bool initialState)
     {
-        SerializeIntoWriter(writer, JigsawState.GetCurrentState(jigsawGame));
+        SerializeIntoWriter(writer, currentState, JigsawState.GetCurrentState(jigsawGame), changeTolerance);
         return true;
     }
     public override void OnDeserialize(NetworkReader reader, bool initialState)
@@ -106,21 +108,22 @@ public class JigsawGameSync : NetworkBehaviour
     // serialization is needed by OnSerialize and by manual sending from authority
     // public only for tests
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static void SerializeIntoWriter(NetworkWriter writer, JigsawState currentState)
+    public static void SerializeIntoWriter(NetworkWriter writer, JigsawState previousState, JigsawState currentState, float changeTolerance)
     {
         // serialize position, rotation, scale
         // note: we do NOT compress rotation.
         //       we are CPU constrained, not bandwidth constrained.
         //       the code needs to WORK for the next 5-10 years of development.
-        JigsawState.Serialize(writer, currentState);
+        JigsawState.Serialize(writer, previousState, currentState, changeTolerance);
     }
     private void DeserializeFromReader(NetworkReader reader)
     {
-        currentState = JigsawState.Deserialize(reader);
+        changeInState = JigsawState.Deserialize(reader);
     }
     private void ApplyValues()
     {
-        JigsawState.ApplyToGame(jigsawGame, currentState);
+        JigsawState.ApplyToGame(jigsawGame, changeInState);
+        currentState = JigsawState.GetCurrentState(jigsawGame);
     }
 
     [Command(ignoreAuthority = true)]

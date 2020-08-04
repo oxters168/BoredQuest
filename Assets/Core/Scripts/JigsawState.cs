@@ -2,16 +2,24 @@
 using UnityEngine;
 using Mirror;
 using System;
+using System.Linq;
+using UnityHelpers;
 
 [Serializable]
 public class JigsawState
 {
     public List<ClusterWrapper> clusters = new List<ClusterWrapper>();
+    public bool containsPuzzleSize;
     public Vector3 puzzleSize;
+    public bool containsPieceCount;
     public Vector2Int puzzlePieceCount;
+    public bool containsBoundaryPercent;
     public Vector2 pieceBoundaryPercent;
+    public bool containsSeed;
     public int seed;
+    public bool containsIsLoading;
     public bool isLoading;
+    public bool containsIsLoaded;
     public bool isLoaded;
 
     public static JigsawState GetCurrentState(JigsawGame game)
@@ -45,13 +53,17 @@ public class JigsawState
     {
         if (currentState != null)
         {
-            jigsawGame.puzzleSize = currentState.puzzleSize;
-            jigsawGame.puzzlePieceCount = currentState.puzzlePieceCount;
-            jigsawGame.pieceBoundaryPercent = currentState.pieceBoundaryPercent;
-            jigsawGame.seed = currentState.seed;
-            if (!jigsawGame.isLoaded && !jigsawGame.isLoading && (currentState.isLoaded || currentState.isLoading))
+            if (currentState.containsPuzzleSize)
+                jigsawGame.puzzleSize = currentState.puzzleSize;
+            if (currentState.containsPieceCount)
+                jigsawGame.puzzlePieceCount = currentState.puzzlePieceCount;
+            if (currentState.containsBoundaryPercent)
+                jigsawGame.pieceBoundaryPercent = currentState.pieceBoundaryPercent;
+            if (currentState.containsSeed)
+                jigsawGame.seed = currentState.seed;
+            if (!jigsawGame.isLoaded && !jigsawGame.isLoading && ((currentState.containsIsLoaded && currentState.isLoaded) || (currentState.containsIsLoading && currentState.isLoading)))
                 jigsawGame.LoadJigsawPuzzle();
-            else if ((jigsawGame.isLoaded || jigsawGame.isLoading) && !currentState.isLoaded && !currentState.isLoading)
+            else if ((jigsawGame.isLoaded || jigsawGame.isLoading) && (currentState.containsIsLoaded && !currentState.isLoaded) && (currentState.containsIsLoading && !currentState.isLoading))
                 jigsawGame.DestroyJigsawPuzzle();
 
             if (jigsawGame.pieces != null && currentState.clusters.Count > 0)
@@ -72,24 +84,30 @@ public class JigsawState
                         var clusterParent = jigsawGame.GetPieceKey(firstIndex);
                         if (clusterParent != null)
                         {
-                            clusterParent.position = cluster.position;
-                            clusterParent.rotation = cluster.rotation;
-                            foreach (var pieceIndex in cluster.indices)
+                            if (cluster.containsTransform)
                             {
-                                var pieceParent = jigsawGame.GetPieceKey(pieceIndex);
-                                if (pieceParent != clusterParent)
+                                clusterParent.position = cluster.position;
+                                clusterParent.rotation = cluster.rotation;
+                            }
+                            if (cluster.containsIndices)
+                            {
+                                foreach (var pieceIndex in cluster.indices)
                                 {
-                                    int currentColIndex = pieceIndex % columns;
-                                    int currentRowIndex = pieceIndex / columns;
-                                    int horOffset = currentColIndex - mainColIndex;
-                                    int verOffset = currentRowIndex - mainRowIndex;
+                                    var pieceParent = jigsawGame.GetPieceKey(pieceIndex);
+                                    if (pieceParent != clusterParent)
+                                    {
+                                        int currentColIndex = pieceIndex % columns;
+                                        int currentRowIndex = pieceIndex / columns;
+                                        int horOffset = currentColIndex - mainColIndex;
+                                        int verOffset = currentRowIndex - mainRowIndex;
 
-                                    var pieceObject = jigsawGame.pieces[pieceIndex].transform;
-                                    pieceObject.SetParent(clusterParent);
-                                    pieceObject.localPosition = new Vector3(horOffset * pieceWidth, 0, verOffset * pieceHeight);
+                                        var pieceObject = jigsawGame.pieces[pieceIndex].transform;
+                                        pieceObject.SetParent(clusterParent);
+                                        pieceObject.localPosition = new Vector3(horOffset * pieceWidth, 0, verOffset * pieceHeight);
 
-                                    jigsawGame.clusters[pieceParent].Remove(pieceIndex);
-                                    jigsawGame.clusters[clusterParent].Add(pieceIndex);
+                                        jigsawGame.clusters[pieceParent].Remove(pieceIndex);
+                                        jigsawGame.clusters[clusterParent].Add(pieceIndex);
+                                    }
                                 }
                             }
                         }
@@ -98,14 +116,37 @@ public class JigsawState
             }
         }
     }
-    public static void Serialize(NetworkWriter writer, JigsawState currentState)
+    public static void Serialize(NetworkWriter writer, JigsawState previousState, JigsawState currentState, float changeTolerance = 0.01f)
     {
-        writer.WriteVector3(currentState.puzzleSize);
-        writer.WriteVector2Int(currentState.puzzlePieceCount);
-        writer.WriteVector2(currentState.pieceBoundaryPercent);
-        writer.WriteInt32(currentState.seed);
-        writer.WriteBoolean(currentState.isLoading);
-        writer.WriteBoolean(currentState.isLoaded);
+        var writePuzzleSize = previousState != null ? !previousState.puzzleSize.EqualTo(currentState.puzzleSize, changeTolerance) : true;
+        writer.WriteBoolean(writePuzzleSize);
+        if (writePuzzleSize)
+            writer.WriteVector3(currentState.puzzleSize);
+
+        var writePieceCount = previousState != null ? (!previousState.puzzlePieceCount.EqualTo(currentState.puzzlePieceCount)) : true;
+        writer.WriteBoolean(writePieceCount);
+        if (writePieceCount)
+            writer.WriteVector2Int(currentState.puzzlePieceCount);
+
+        var writeBoundaryPercent = previousState != null ? (!previousState.pieceBoundaryPercent.EqualTo(currentState.pieceBoundaryPercent, changeTolerance)) : true;
+        writer.WriteBoolean(writeBoundaryPercent);
+        if (writeBoundaryPercent)
+            writer.WriteVector2(currentState.pieceBoundaryPercent);
+
+        var writeSeed = previousState != null ? (previousState.seed != currentState.seed) : true;
+        writer.WriteBoolean(writeSeed);
+        if (writeSeed)
+            writer.WriteInt32(currentState.seed);
+
+        var writeIsLoading = previousState != null ? (previousState.isLoading != currentState.isLoading) : true;
+        writer.WriteBoolean(writeIsLoading);
+        if (writeIsLoading)
+            writer.WriteBoolean(currentState.isLoading);
+
+        var writeIsLoaded = previousState != null ? (previousState.isLoaded != currentState.isLoaded) : true;
+        writer.WriteBoolean(writeIsLoaded);
+        if (writeIsLoaded)
+            writer.WriteBoolean(currentState.isLoaded);
 
         var clusters = currentState.clusters;
         if (clusters != null)
@@ -113,26 +154,65 @@ public class JigsawState
             //var pieces = currentState.pieces;
             foreach (var cluster in clusters)
             {
-                foreach (var pieceInCluster in cluster.indices)
+                if (cluster.indices.Count > 0)
                 {
-                    //var pieceIndex = System.Array.IndexOf(pieces, pieceInCluster);
-                    writer.WriteInt32(pieceInCluster);
+                    var firstIndex = cluster.indices[0];
+                    IEnumerable<ClusterWrapper> searchResults = null;
+                    if (previousState != null)
+                        searchResults = previousState.clusters.Where((c) => c.indices.Contains(firstIndex));
+                    ClusterWrapper previousCluster = (searchResults != null && searchResults.Count() > 0) ? searchResults.First() : null;
+
+                    var writeClusterTransform = previousCluster != null ? (!previousCluster.position.EqualTo(cluster.position, changeTolerance)) || (!previousCluster.rotation.EqualTo(cluster.rotation, changeTolerance)) : true;
+                    var writeClusterIndices = previousCluster != null ? previousCluster.indices.Count != cluster.indices.Count : true;
+                    writer.WriteBoolean(writeClusterIndices);
+                    if (writeClusterIndices)
+                    {
+                        foreach (var pieceInCluster in cluster.indices)
+                            writer.WriteInt32(pieceInCluster);
+                    }
+                    else
+                        writer.WriteInt32(firstIndex);
+                    writer.WriteInt32(-1);
+
+                    writer.WriteBoolean(writeClusterTransform);
+                    if (writeClusterTransform)
+                    {
+                        writer.WriteVector3(cluster.position);
+                        writer.WriteQuaternion(cluster.rotation);
+                    }
                 }
-                writer.WriteInt32(-1);
-                writer.WriteVector3(cluster.position);
-                writer.WriteQuaternion(cluster.rotation);
             }
         }
+        writer.WriteBoolean(false); //For the last 'contains indices'
         writer.WriteInt32(int.MinValue);
     }
     public static JigsawState Deserialize(NetworkReader reader)
     {
-        Vector3 puzzleSize = reader.ReadVector3();
-        Vector2Int puzzlePieceCount = reader.ReadVector2Int();
-        Vector2 pieceBoundaryPercent = reader.ReadVector2();
-        int seed = reader.ReadInt32();
-        bool isLoading = reader.ReadBoolean();
-        bool isLoaded = reader.ReadBoolean();
+        JigsawState deserializedState = new JigsawState();
+
+        deserializedState.containsPuzzleSize = reader.ReadBoolean();
+        if (deserializedState.containsPuzzleSize)
+            deserializedState.puzzleSize = reader.ReadVector3();
+
+        deserializedState.containsPieceCount = reader.ReadBoolean();
+        if (deserializedState.containsPieceCount)
+            deserializedState.puzzlePieceCount = reader.ReadVector2Int();
+
+        deserializedState.containsBoundaryPercent = reader.ReadBoolean();
+        if (deserializedState.containsBoundaryPercent)
+            deserializedState.pieceBoundaryPercent = reader.ReadVector2();
+
+        deserializedState.containsSeed = reader.ReadBoolean();
+        if (deserializedState.containsSeed)
+            deserializedState.seed = reader.ReadInt32();
+
+        deserializedState.containsIsLoading = reader.ReadBoolean();
+        if (deserializedState.containsIsLoading)
+            deserializedState.isLoading = reader.ReadBoolean();
+
+        deserializedState.containsIsLoaded = reader.ReadBoolean();
+        if (deserializedState.containsIsLoaded)
+            deserializedState.isLoaded = reader.ReadBoolean();
         
         List<ClusterWrapper> clusters = new List<ClusterWrapper>();
         int currentIndex = int.MaxValue;
@@ -141,33 +221,36 @@ public class JigsawState
         {
             if (currentIndex < 0)
             {
-                currentCluster.position = reader.ReadVector3();
-                currentCluster.rotation = reader.ReadQuaternion();
+                currentCluster.containsTransform = reader.ReadBoolean();
+                if (currentCluster.containsTransform)
+                {
+                    currentCluster.position = reader.ReadVector3();
+                    currentCluster.rotation = reader.ReadQuaternion();
+                }
                 clusters.Add(currentCluster);
                 currentCluster = new ClusterWrapper();
+                currentIndex = int.MaxValue;
             }
             else if (currentIndex != int.MaxValue)
                 currentCluster.indices.Add(currentIndex);
             
+            if (currentIndex == int.MaxValue)
+                currentCluster.containsIndices = reader.ReadBoolean();
+            
             currentIndex = reader.ReadInt32();
         }
+        deserializedState.clusters = clusters;
 
-        return new JigsawState()
-        {
-            puzzleSize = puzzleSize,
-            puzzlePieceCount = puzzlePieceCount,
-            pieceBoundaryPercent = pieceBoundaryPercent,
-            seed = seed, clusters = clusters,
-            isLoading = isLoading,
-            isLoaded = isLoaded
-        };
+        return deserializedState;
     }
 
     [Serializable]
     public class ClusterWrapper
     {
+        public bool containsTransform;
         public Vector3 position;
         public Quaternion rotation;
+        public bool containsIndices;
         public List<int> indices = new List<int>();
     }
 }

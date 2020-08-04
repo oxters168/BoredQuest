@@ -227,9 +227,9 @@ public class NetworkUIBridge : MonoBehaviour
     {
         Debug.Log("Requesting access to room " + roomId);
         SetConnectingToRoomValue(false);
-        MsfDictKeys.roomId = roomId.ToString();
-        Barebones.Bridges.Mirror.MirrorRoomClient.Instance.StartClient();
-        //Msf.Client.Rooms.GetAccess(roomId, RoomAccessHandler);
+        //MsfDictKeys.roomId = roomId.ToString();
+        //Barebones.Bridges.Mirror.MirrorRoomClient.Instance.StartClient();
+        ((WebSocketMirrorRoomClient)Barebones.Bridges.Mirror.MirrorRoomClient.Instance).ConnectToRoom(roomId);
     }
     private void TryJoinRoom(string roomName)
     {

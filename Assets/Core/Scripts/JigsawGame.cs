@@ -174,7 +174,8 @@ public class JigsawGame : MonoBehaviour
         GameObject clusterParent = new GameObject();
         var rigidbody = clusterParent.AddComponent<Rigidbody>();
         rigidbody.isKinematic = true;
-        clusterParent.AddComponent<GrabbableTransform>();
+        var grabbable = clusterParent.AddComponent<GrabbableTransform>();
+        grabbable.SetMaxGrabbers(1);
         clusterParent.name = "Cluster";
         clusterParent.transform.SetParent(transform);
         List<int> emptyList = new List<int>();

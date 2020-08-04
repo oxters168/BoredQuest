@@ -234,7 +234,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 0
-  serverIp: 178.62.6.45
+  serverIp: 127.0.0.1
   serverPort: 5000
   minTimeToConnect: 0.5
   maxTimeToConnect: 4
@@ -422,7 +422,7 @@ MonoBehaviour:
   targetFrameRate: 30
   logLevel: 0
   usePublicIp: 0
-  serverIP: 178.62.6.45
+  serverIP: 127.0.0.1
   serverPort: 5000
   autoStartInEditor: 1
 --- !u!4 &1005001217
@@ -676,7 +676,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   logLevel: 0
   spawnerLogLevel: 0
-  machineIp: 178.62.6.45
+  machineIp: 127.0.0.1
   usePublicIp: 0
   executableFilePath: ../GameServer/GameServer.x86_64
   spawnInBatchmode: 0

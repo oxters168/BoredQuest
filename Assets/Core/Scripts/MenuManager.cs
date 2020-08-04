@@ -58,7 +58,7 @@ public class MenuManager : MonoBehaviour
         {
             if (Time.time - prevUpdateInfoTime > updateInfoTime)
             {
-                Msf.Client.Matchmaker.FindGames((games) => { Debug.Log("Refreshed games list"); var refreshedInfo = games.FirstOrDefault(game => game.Id == msfBridge.gameInfo.Id); if (refreshedInfo != null) { Debug.Log("Refreshed game info"); msfBridge.gameInfo = refreshedInfo; } });
+                Msf.Client.Matchmaker.FindGames((games) => { var refreshedInfo = games.FirstOrDefault(game => game.Id == msfBridge.gameInfo.Id); if (refreshedInfo != null) { msfBridge.gameInfo = refreshedInfo; } });
                 //I'll try to figure out later why player count isn't updating
                 prevUpdateInfoTime = Time.time;
             }

@@ -1,11 +1,27 @@
 ﻿using Barebones.Bridges.Mirror;
 using Barebones.MasterServer;
-using Barebones.Networking;
+//using Barebones.Networking;
 using Mirror;
 
 public class WebSocketMirrorRoomClient : MirrorRoomClient
 {
     private int lastRoomIdRequestedAccessTo = int.MinValue;
+
+    /// <summary>
+    /// Start room client
+    /// </summary>
+    public void ConnectToRoom(int roomId)
+    {
+        if (!Msf.Client.Auth.IsSignedIn)
+        {
+            logger.Error("Could not connect to room, not signed in");
+        }
+        else
+        {
+            // Let's get access to room
+            GetRoomAccess(roomId);
+        }
+    }
 
     public override void SetPort(int port)
     {
@@ -31,24 +47,6 @@ public class WebSocketMirrorRoomClient : MirrorRoomClient
             return 0;
         }
     }
-
-    /// <summary>
-    /// Tries to get access data for room we want to connect to
-    /// </summary>
-    /// <param name="roomId"></param>
-    /*protected override void GetRoomAccess(int roomId)
-    {
-        if (lastRoomIdRequestedAccessTo != roomId)
-            base.GetRoomAccess(roomId);
-
-        lastRoomIdRequestedAccessTo = roomId;
-    }
-
-    protected override void JoinTheRoom()
-    {
-        base.JoinTheRoom();
-        lastRoomIdRequestedAccessTo = int.MinValue;
-    }*/
 
     /// <summary>
     /// Fired when mirror client is started.
