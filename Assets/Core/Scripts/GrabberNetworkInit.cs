@@ -1,10 +1,9 @@
-﻿using Mirror;
-using UnityEngine;
+﻿using UnityEngine;
 using System.ComponentModel;
 
-public class GrabberNetworkInit : NetworkBehaviour
+public class GrabberNetworkInit : MonoBehaviour//NetworkBehaviour
 {
-    [Tooltip("Set to true if moves come from owner client, set to false if moves always come from server")]
+    /*[Tooltip("Set to true if moves come from owner client, set to false if moves always come from server")]
     public bool clientAuthority;
     private float lastClientSendTime = float.MinValue;
     // Is this a client with authority over this transform?
@@ -79,26 +78,26 @@ public class GrabberNetworkInit : NetworkBehaviour
             {
                 ApplyValues();
                 // received one yet? (initialized?)
-                /*if (goal != null)
-                {
-                    // teleport or interpolate
-                    if (NeedsTeleport())
-                    {
-                        // local position/rotation for VR support
-                        ApplyPositionRotationScale(goal.localPosition, goal.localRotation, goal.localScale);
+                // if (goal != null)
+                // {
+                //     // teleport or interpolate
+                //     if (NeedsTeleport())
+                //     {
+                //         // local position/rotation for VR support
+                //         ApplyPositionRotationScale(goal.localPosition, goal.localRotation, goal.localScale);
 
-                        // reset data points so we don't keep interpolating
-                        start = null;
-                        goal = null;
-                    }
-                    else
-                    {
-                        // local position/rotation for VR support
-                        ApplyPositionRotationScale(InterpolatePosition(start, goal, targetComponent.transform.localPosition),
-                                                    InterpolateRotation(start, goal, targetComponent.transform.localRotation),
-                                                    InterpolateScale(start, goal, targetComponent.transform.localScale));
-                    }
-                }*/
+                //         // reset data points so we don't keep interpolating
+                //         start = null;
+                //         goal = null;
+                //     }
+                //     else
+                //     {
+                //         // local position/rotation for VR support
+                //         ApplyPositionRotationScale(InterpolatePosition(start, goal, targetComponent.transform.localPosition),
+                //                                     InterpolateRotation(start, goal, targetComponent.transform.localRotation),
+                //                                     InterpolateScale(start, goal, targetComponent.transform.localScale));
+                //     }
+                // }
             }
         }
     }
@@ -185,5 +184,5 @@ public class GrabberNetworkInit : NetworkBehaviour
 
         // set dirty so that OnSerialize broadcasts it
         SetDirtyBit(1UL);
-    }
+    }*/
 }

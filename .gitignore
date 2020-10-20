@@ -59,11 +59,8 @@ sysinfo.txt
 crashlytics-build.properties
 
 # Imported
-Assets/Barebones/*
-!Assets/Barebones/.gitkeep
-
-Assets/Mirror/*
-!Assets/Mirror/.gitkeep
+Assets/Nakama/*
+!Assets/Nakama/.gitkeep
 
 Assets/TextMesh Pro/*
 !Assets/TextMesh Pro/.gitkeep

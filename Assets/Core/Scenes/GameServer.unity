@@ -1111,7 +1111,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   logLevel: 3
-  serverIp: 127.0.0.1
+  serverIp: 178.62.6.45
   serverPort: 5000
   minTimeToConnect: 0.5
   maxTimeToConnect: 4
@@ -1315,7 +1315,7 @@ MonoBehaviour:
   initModulesAtStart: 1
   autoLoadUserProfile: 0
   disconnectIfProfileFailed: 0
-  masterIp: 127.0.0.1
+  masterIp: 178.62.6.45
   masterPort: 5000
   terminateRoomWhenLastPlayerQuits: 1
   terminateEmptyRoomInSeconds: 60

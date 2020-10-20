@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
-using Barebones.MasterServer;
 using TMPro;
-using System.Linq;
 
 public class MenuManager : MonoBehaviour
 {
@@ -39,7 +37,8 @@ public class MenuManager : MonoBehaviour
 
     void Update()
     {
-        SetInteractables(Msf.Connection.IsConnected);
+        // SetInteractables(Msf.Connection.IsConnected);
+        SetInteractables(true);
         UpdateMenus();
         UpdateOnScreenInfo();
 
@@ -54,17 +53,14 @@ public class MenuManager : MonoBehaviour
     }
     private void UpdateOnScreenInfo()
     {
-        if (msfBridge.connectedToGameServer && msfBridge.gameInfo != null)
-        {
-            if (Time.time - prevUpdateInfoTime > updateInfoTime)
-            {
-                Msf.Client.Matchmaker.FindGames((games) => { var refreshedInfo = games.FirstOrDefault(game => game.Id == msfBridge.gameInfo.Id); if (refreshedInfo != null) { msfBridge.gameInfo = refreshedInfo; } });
-                //I'll try to figure out later why player count isn't updating
-                prevUpdateInfoTime = Time.time;
-            }
-            playersLabel.text = msfBridge.gameInfo.OnlinePlayers + "/" + msfBridge.gameInfo.MaxPlayers;
-            roomNameLabel.text = "Room code: " + msfBridge.gameInfo.Name;
-        }
+        // if (Time.time - prevUpdateInfoTime > updateInfoTime)
+        // {
+        //     Msf.Client.Matchmaker.FindGames((games) => { var refreshedInfo = games.FirstOrDefault(game => game.Id == msfBridge.gameInfo.Id); if (refreshedInfo != null) { msfBridge.gameInfo = refreshedInfo; } });
+        //     //I'll try to figure out later why player count isn't updating
+        //     prevUpdateInfoTime = Time.time;
+        // }
+        // playersLabel.text = msfBridge.gameInfo.OnlinePlayers + "/" + msfBridge.gameInfo.MaxPlayers;
+        // roomNameLabel.text = "Room code: " + msfBridge.gameInfo.Name;
     }
     private void UpdateMenus()
     {
@@ -76,7 +72,7 @@ public class MenuManager : MonoBehaviour
         if (jigsawGame != null)
             puzzleInProgress = jigsawGame.isLoading || jigsawGame.isLoaded;
 
-        msfScreen.SetActive(!puzzleInProgress && msfScreenActive);
+        //msfScreen.SetActive(!puzzleInProgress && msfScreenActive);
         loadingScreen.SetActive(!puzzleInProgress && loadingScreenActive);
 
         gameSetupPanel.SetActive(!puzzleInProgress && gameSetupScreenActive);
@@ -134,32 +130,32 @@ public class MenuManager : MonoBehaviour
 
     private void SetColumnsValue(int columns)
     {
-        columns = Mathf.Clamp(columns, 2, maxPieceCount.x);
-        var jigsawGame = FindObjectOfType<JigsawGameSync>();
-        if (jigsawGame != null)
-            jigsawGame.CmdSetColumnsValue(columns);
+        // columns = Mathf.Clamp(columns, 2, maxPieceCount.x);
+        // var jigsawGame = FindObjectOfType<JigsawGameSync>();
+        // if (jigsawGame != null)
+        //     jigsawGame.CmdSetColumnsValue(columns);
     }
     private void SetRowsValue(int rows)
     {
-        rows = Mathf.Clamp(rows, 2, maxPieceCount.y);
-        var jigsawGame = FindObjectOfType<JigsawGameSync>();
-        if (jigsawGame != null)
-            jigsawGame.CmdSetRowsValue(rows);
+        // rows = Mathf.Clamp(rows, 2, maxPieceCount.y);
+        // var jigsawGame = FindObjectOfType<JigsawGameSync>();
+        // if (jigsawGame != null)
+        //     jigsawGame.CmdSetRowsValue(rows);
     }
     public void LoadJigsaw()
     {
-        var jigsawGame = FindObjectOfType<JigsawGameSync>();
-        if (jigsawGame != null)
-            jigsawGame.CmdLoadJigsawPuzzle();
-        else
+        // var jigsawGame = FindObjectOfType<JigsawGameSync>();
+        // if (jigsawGame != null)
+        //     jigsawGame.CmdLoadJigsawPuzzle();
+        // else
             Debug.LogError("Jigsaw game does not exist?!");
     }
     public void UnloadJigsaw()
     {
-        var jigsawGame = FindObjectOfType<JigsawGameSync>();
-        if (jigsawGame != null)
-            jigsawGame.CmdDestroyJigsawPuzzle();
-        else
+        // var jigsawGame = FindObjectOfType<JigsawGameSync>();
+        // if (jigsawGame != null)
+        //     jigsawGame.CmdDestroyJigsawPuzzle();
+        // else
             Debug.LogError("Jigsaw game does not exist?!");
     }
 }

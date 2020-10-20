@@ -1,11 +1,10 @@
 ﻿using UnityEngine;
-using Mirror;
 using System.ComponentModel;
 using UnityHelpers;
 
-public class JigsawGameSync : NetworkBehaviour
+public class JigsawGameSync : MonoBehaviour//NetworkBehaviour
 {
-    [Tooltip("Set to true if moves come from owner client, set to false if moves always come from server")]
+    /*[Tooltip("Set to true if moves come from owner client, set to false if moves always come from server")]
     public bool clientAuthority;
     private float lastClientSendTime = float.MinValue;
     // Is this a client with authority over this transform?
@@ -166,5 +165,5 @@ public class JigsawGameSync : NetworkBehaviour
 
         // set dirty so that OnSerialize broadcasts it
         SetDirtyBit(1UL);
-    }
+    }*/
 }

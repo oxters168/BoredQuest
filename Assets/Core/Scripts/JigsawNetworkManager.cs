@@ -1,9 +1,8 @@
-﻿using Barebones.Bridges.Mirror;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class JigsawNetworkManager : MirrorNetworkManager
+public class JigsawNetworkManager : MonoBehaviour//MirrorNetworkManager
 {
-    public GameObject jigsawGamePrefab;
+    /*public GameObject jigsawGamePrefab;
 
     public override void Awake()
     {
@@ -22,5 +21,5 @@ public class JigsawNetworkManager : MirrorNetworkManager
         //var pieceCount = Random.Range(2, 13);
         //gameScript.puzzlePieceCount = new Vector2Int(pieceCount, pieceCount);
         //gameScript.LoadJigsawPuzzle();
-    }
+    }*/
 }

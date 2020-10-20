@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using Mirror;
 using System;
 using System.Linq;
 using UnityHelpers;
@@ -116,7 +115,7 @@ public class JigsawState
             }
         }
     }
-    public static void Serialize(NetworkWriter writer, JigsawState previousState, JigsawState currentState, float changeTolerance = 0.01f)
+    /*public static void Serialize(NetworkWriter writer, JigsawState previousState, JigsawState currentState, float changeTolerance = 0.01f)
     {
         var writePuzzleSize = previousState != null ? !previousState.puzzleSize.EqualTo(currentState.puzzleSize, changeTolerance) : true;
         writer.WriteBoolean(writePuzzleSize);
@@ -242,7 +241,7 @@ public class JigsawState
         deserializedState.clusters = clusters;
 
         return deserializedState;
-    }
+    }*/
 
     [Serializable]
     public class ClusterWrapper
